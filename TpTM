@@ -1,0 +1,26 @@
+local P, UIS = game:GetService("Players"), game:GetService("UserInputService")
+local plr = P.LocalPlayer
+
+local function findKnifePlayer()
+    for _, p in ipairs(P:GetPlayers()) do
+        if p ~= plr and p.Character then
+            local function checkChildren(obj)
+                for _, item in ipairs(obj:GetChildren()) do
+                    if item.Name:lower() == "knife" then return p end
+                    if #item:GetChildren() > 0 then checkChildren(item) end
+                end
+            end
+            checkChildren(p)
+            checkChildren(p.Character)
+        end
+    end
+end
+
+UIS.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.K then
+        local target = findKnifePlayer()
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            plr.Character:FindFirstChild("HumanoidRootPart").CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
+        end
+    end
+end)
