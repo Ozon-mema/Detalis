@@ -1,0 +1,59 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local function createESP(player)
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "ESP_Highlight"
+    highlight.Adornee = player.Character
+    highlight.Parent = player.Character
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.FillTransparency = 0.8
+    
+    local function updateColor()
+        if not player.Character then return end
+        
+        local hasGun = false
+        local hasKnife = false
+        
+        for _, item in ipairs(player.Character:GetChildren()) do
+            if item.Name == "Gun" then hasGun = true end
+            if item.Name == "Knife" then hasKnife = true end
+        end
+        
+        if hasGun then
+            highlight.FillColor = Color3.fromRGB(0, 100, 255)  -- Синий
+            highlight.OutlineColor = Color3.fromRGB(0, 80, 200)
+        elseif hasKnife then
+            highlight.FillColor = Color3.fromRGB(255, 50, 50)  -- Красный
+            highlight.OutlineColor = Color3.fromRGB(200, 30, 30)
+        else
+            highlight.FillColor = Color3.fromRGB(50, 255, 50)  -- Зеленый
+            highlight.OutlineColor = Color3.fromRGB(30, 200, 30)
+        end
+    end
+
+    local connection
+    connection = RunService.Heartbeat:Connect(function()
+        if player.Character and highlight.Parent then
+            updateColor()
+        else
+            connection:Disconnect()
+        end
+    end)
+    
+    player.CharacterAdded:Connect(function(character)
+        task.wait(1)
+        highlight.Adornee = character
+        highlight.Parent = character
+    end)
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= Players.LocalPlayer then
+        createESP(player)
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    createESP(player)
+end)
