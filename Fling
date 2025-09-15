@@ -1,0 +1,126 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+local FlingEnabled = false
+local NoclipEnabled = false
+local FlingForce = 50000
+
+-- Продвинутый Noclip с защитой от проваливания
+local function advancedNoclip()
+    if not NoclipEnabled or not player.Character then return end
+    
+    local character = player.Character
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    
+    if not humanoid or not rootPart then return end
+    
+    -- Отключаем коллизию для всех частей тела
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+    
+    -- Защита от проваливания под карту
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {character}
+    
+    local raycastResult = workspace:Raycast(rootPart.Position, Vector3.new(0, -10, 0), raycastParams)
+    
+    if raycastResult then
+        local distance = (rootPart.Position - raycastResult.Position).Magnitude
+        if distance > 5 then
+            -- Телепортируем обратно если слишком далеко упали
+            rootPart.CFrame = CFrame.new(rootPart.Position.X, raycastResult.Position.Y + 3, rootPart.Position.Z)
+        end
+    else
+        -- Если под нами ничего нет, создаем невидимую платформу
+        local platform = Instance.new("Part")
+        platform.Size = Vector3.new(10, 1, 10)
+        platform.Position = rootPart.Position - Vector3.new(0, 3, 0)
+        platform.Anchored = true
+        platform.Transparency = 1
+        platform.CanCollide = true
+        platform.Parent = workspace
+        game:GetService("Debris"):AddItem(platform, 0.1)
+    end
+end
+
+-- Продвинутый Fling система
+local function advancedFling()
+    if not FlingEnabled or not player.Character then return end
+    
+    local character = player.Character
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    
+    if not rootPart or not humanoid then return end
+    
+    -- Создаем или обновляем BodyVelocity для флинга
+    local bodyVelocity = rootPart:FindFirstChild("FlingVelocity") or Instance.new("BodyVelocity")
+    bodyVelocity.Name = "FlingVelocity"
+    bodyVelocity.Velocity = Vector3.new(
+        math.random(-FlingForce, FlingForce),
+        math.random(FlingForce/2, FlingForce),
+        math.random(-FlingForce, FlingForce)
+    )
+    bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+    bodyVelocity.P = 10000
+    bodyVelocity.Parent = rootPart
+    
+    -- Вращение для эффекта
+    local bodyGyro = rootPart:FindFirstChild("FlingGyro") or Instance.new("BodyGyro")
+    bodyGyro.Name = "FlingGyro"
+    bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    bodyGyro.P = 10000
+    bodyGyro.CFrame = rootPart.CFrame * CFrame.Angles(math.rad(math.random(360)), math.rad(math.random(360)), math.rad(math.random(360)))
+    bodyGyro.Parent = rootPart
+    
+    -- Автоотключение через 3 секунды
+    task.delay(3, function()
+        if bodyVelocity and bodyVelocity.Parent then
+            bodyVelocity:Destroy()
+        end
+        if bodyGyro and bodyGyro.Parent then
+            bodyGyro:Destroy()
+        end
+        FlingEnabled = false
+    end)
+end
+
+-- Обработка ввода
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.F then
+        FlingEnabled = not FlingEnabled
+        if FlingEnabled then
+            advancedFling()
+        end
+    end
+    
+    if input.KeyCode == Enum.KeyCode.N then
+        NoclipEnabled = not NoclipEnabled
+        print("Noclip: " .. (NoclipEnabled and "ON" or "OFF"))
+    end
+end)
+
+-- Основной цикл
+RunService.Stepped:Connect(function()
+    if NoclipEnabled then
+        advancedNoclip()
+    end
+end)
+
+player.CharacterAdded:Connect(function(character)
+    task.wait(1)
+    if NoclipEnabled then
+        advancedNoclip()
+    end
+end)
+
+print("Fling Script Loaded!")
+print("Press F - Toggle Fling")
+print("Press N - Toggle Noclip")
