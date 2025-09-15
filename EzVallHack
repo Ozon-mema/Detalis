@@ -9,17 +9,49 @@ local function createESP(player)
     highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     highlight.FillTransparency = 0.8
     
-    local function updateColor()
-        if not player.Character then return end
+    local function checkWeapons()
+        if not player.Character then return false, false end
         
         local hasGun = false
         local hasKnife = false
         
-        for _, item in ipairs(player.Character:GetChildren()) do
-            if item.Name == "Gun" then hasGun = true end
-            if item.Name == "Knife" then hasKnife = true end
+        -- Проверяем инвентарь (рюкзак)
+        local backpack = player:FindFirstChild("Backpack")
+        if backpack then
+            for _, item in ipairs(backpack:GetChildren()) do
+                if item.Name:lower() == "gun" then hasGun = true end
+                if item.Name:lower() == "knife" then hasKnife = true end
+            end
         end
         
+        -- Проверяем инструменты в руках (только экипированные)
+        local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            for _, tool in ipairs(humanoid:GetChildren()) do
+                if tool:IsA("Tool") then
+                    if tool.Name:lower() == "gun" then hasGun = true end
+                    if tool.Name:lower() == "knife" then hasKnife = true end
+                end
+            end
+        end
+        
+        -- Проверяем детей персонажа (только инструменты)
+        for _, item in ipairs(player.Character:GetChildren()) do
+            if item:IsA("Tool") then
+                if item.Name:lower() == "gun" then hasGun = true end
+                if item.Name:lower() == "knife" then hasKnife = true end
+            end
+        end
+        
+        return hasGun, hasKnife
+    end
+
+    local function updateColor()
+        if not player.Character or not highlight.Parent then return end
+        
+        local hasGun, hasKnife = checkWeapons()
+        
+        -- Приоритет: Gun > Knife > Nothing
         if hasGun then
             highlight.FillColor = Color3.fromRGB(0, 100, 255)  -- Синий
             highlight.OutlineColor = Color3.fromRGB(0, 80, 200)
@@ -32,6 +64,7 @@ local function createESP(player)
         end
     end
 
+    -- Основное обновление
     local connection
     connection = RunService.Heartbeat:Connect(function()
         if player.Character and highlight.Parent then
@@ -41,19 +74,63 @@ local function createESP(player)
         end
     end)
     
+    -- Следим за изменениями в рюкзаке и инвентаре
+    local backpackConnection
+    local characterConnection
+    
     player.CharacterAdded:Connect(function(character)
         task.wait(1)
         highlight.Adornee = character
         highlight.Parent = character
+        
+        -- Отписываемся от старых соединений
+        if backpackConnection then backpackConnection:Disconnect() end
+        if characterConnection then characterConnection:Disconnect() end
+        
+        -- Следим за рюкзаком
+        local backpack = player:WaitForChild("Backpack", 2)
+        if backpack then
+            backpackConnection = backpack.ChildAdded:Connect(updateColor)
+            backpack.ChildRemoved:Connect(updateColor)
+        end
+        
+        -- Следим за изменениями в персонаже (инструменты)
+        characterConnection = character.ChildAdded:Connect(function(child)
+            if child:IsA("Tool") then
+                updateColor()
+            end
+        end)
+        
+        character.ChildRemoved:Connect(function(child)
+            if child:IsA("Tool") then
+
+updateColor()
+            end
+        end)
+        
+        updateColor()
     end)
+    
+    -- Инициализация при первом подключении
+    if player.Character then
+        updateColor()
+    end
+    
+    local backpack = player:FindFirstChild("Backpack")
+    if backpack then
+        backpack.ChildAdded:Connect(updateColor)
+        backpack.ChildRemoved:Connect(updateColor)
+    end
 end
 
+-- Инициализация для всех игроков
 for _, player in ipairs(Players:GetPlayers()) do
     if player ~= Players.LocalPlayer then
         createESP(player)
     end
 end
 
+-- Для новых игроков
 Players.PlayerAdded:Connect(function(player)
     createESP(player)
 end)
