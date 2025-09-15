@@ -6,7 +6,7 @@ local function findKnifePlayer()
         if p ~= plr and p.Character then
             local function checkChildren(obj)
                 for _, item in ipairs(obj:GetChildren()) do
-                    if item.Name:lower() == "knife" then return p end
+                    if item.Name:lower() == "Knife" then return p end
                     if #item:GetChildren() > 0 then checkChildren(item) end
                 end
             end
