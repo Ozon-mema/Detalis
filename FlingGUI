@@ -1,5 +1,6 @@
 -- Touch fling gui by nickname
--- Version: 0.9
+
+-- Version: 1
 
 -- Instances:
 
@@ -9,23 +10,20 @@ local Frame_2 = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
 local TextBox = Instance.new("TextBox")
 local TextButton = Instance.new("TextButton")
-local DropdownButton = Instance.new("TextButton")
-local DropdownFrame = Instance.new("Frame")
-local UIListLayout = Instance.new("UIListLayout")
 
 --Properties:
 
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
-print("Loaded!")
+print("sub to DuplexScripts")
 
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
 Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Frame.BorderSizePixel = 0
 Frame.Position = UDim2.new(0.388539821, 0, 0.427821517, 0)
-Frame.Size = UDim2.new(0, 158, 0, 170)
+Frame.Size = UDim2.new(0, 158, 0, 140)
 
 Frame_2.Parent = Frame
 Frame_2.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
@@ -68,29 +66,6 @@ TextButton.Text = "FLING"
 TextButton.TextColor3 = Color3.fromRGB(0, 0, 0)
 TextButton.TextSize = 20.000
 
-DropdownButton.Parent = Frame
-DropdownButton.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
-DropdownButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-DropdownButton.BorderSizePixel = 2
-DropdownButton.Position = UDim2.new(0.113924049, 0, 0.8, 0)
-DropdownButton.Size = UDim2.new(0, 121, 0, 20)
-DropdownButton.Font = Enum.Font.SourceSans
-DropdownButton.Text = "Список игроков"
-DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-DropdownButton.TextSize = 14.000
-
-DropdownFrame.Parent = Frame
-DropdownFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-DropdownFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-DropdownFrame.BorderSizePixel = 2
-DropdownFrame.Position = UDim2.new(0, 0, 1, 5)
-DropdownFrame.Size = UDim2.new(0, 158, 0, 0)
-DropdownFrame.Visible = false
-DropdownFrame.ClipsDescendants = true
-
-UIListLayout.Parent = DropdownFrame
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
 -- Scripts:
 
 local function IIMAWH_fake_script() -- TextButton.LocalScript 
@@ -102,97 +77,16 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 	
 	local toggleButton = script.Parent
 	local textBox = script.Parent.Parent:FindFirstChild("TextBox")
-	local dropdownButton = script.Parent.Parent:FindFirstChild("DropdownButton")
-	local dropdownFrame = script.Parent.Parent:FindFirstChild("DropdownFrame")
 	local isFlinging = false
 	local connection = nil
 	local fallProtectionConnection = nil
 	local originalPosition = nil
-	local playerButtons = {}
-	
-	-- События для отслеживания игроков
-	local playerAddedConnection = nil
-	local playerRemovingConnection = nil
 	
 	if not ReplicatedStorage:FindFirstChild("juisdfj0i32i0eidsuf0iok") then
 		local detection = Instance.new("Decal")
 		detection.Name = "juisdfj0i32i0eidsuf0iok"
 		detection.Parent = ReplicatedStorage
 	end
-	
-	-- Функция для обновления списка игроков
-	local function updatePlayersList()
-		-- Очищаем старые кнопки
-		for _, button in pairs(playerButtons) do
-			button:Destroy()
-		end
-		playerButtons = {}
-		
-		-- Создаем кнопки для каждого игрока
-		local players = Players:GetPlayers()
-		table.sort(players, function(a, b)
-			return a.Name:lower() < b.Name:lower()
-		end)
-		
-		local height = 0
-		for _, player in pairs(players) do
-			if player ~= Players.LocalPlayer then
-				local playerButton = Instance.new("TextButton")
-				playerButton.Name = player.Name
-				playerButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-				playerButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-				playerButton.BorderSizePixel = 1
-				playerButton.Size = UDim2.new(1, 0, 0, 25)
-				playerButton.Font = Enum.Font.SourceSans
-				playerButton.Text = player.Name
-				playerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-				playerButton.TextSize = 14.000
-				playerButton.Parent = dropdownFrame
-				
-				playerButton.MouseButton1Click:Connect(function()
-					textBox.Text = player.Name
-					dropdownFrame.Visible = false
-					dropdownFrame.Size = UDim2.new(0, 158, 0, 0)
-				end)
-				
-				table.insert(playerButtons, playerButton)
-				height = height + 25
-			end
-		end
-		
-		-- Обновляем размер dropdown
-		if dropdownFrame.Visible then
-			dropdownFrame.Size = UDim2.new(0, 158, 0, math.min(height, 150))
-		end
-	end
-	
-	-- Функция для переключения видимости списка игроков
-	local function toggleDropdown()
-		dropdownFrame.Visible = not dropdownFrame.Visible
-		if dropdownFrame.Visible then
-			updatePlayersList()
-		else
-			dropdownFrame.Size = UDim2.new(0, 158, 0, 0)
-		end
-	end
-	
-	-- Инициализация списка игроков
-	updatePlayersList()
-	
-	-- Подписываемся на события игроков
-	playerAddedConnection = Players.PlayerAdded:Connect(function(player)
-		updatePlayersList()
-	end)
-	
-	playerRemovingConnection = Players.PlayerRemoving:Connect(function(player)
-		updatePlayersList()
-		-- Если целевой игрок вышел, останавливаем флинг
-		if isFlinging and textBox.Text == player.Name then
-			stopFlinging()
-			textBox.Text = ""
-			textBox.PlaceholderText = "Игрок вышел из игры"
-		end
-	end)
 	
 	local function checkBoundary(position)
 		local boundary = 2000
@@ -203,6 +97,25 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 	local function checkFallUnderMap(position)
 		local deathHeight = -100 -- Высота, при достижении которой считается, что игрок упал под карту
 		return position.Y < deathHeight
+	end
+	
+	-- Функция для поиска игрока по никнейму (исправленная)
+	local function findPlayerByName(name)
+		-- Проверяем точное совпадение
+		local exactMatch = Players:FindFirstChild(name)
+		if exactMatch then
+			return exactMatch
+		end
+		
+		-- Если точного совпадения нет, ищем по частичному совпадению (без учета регистра)
+		name = name:lower()
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player.Name:lower():find(name, 1, true) or (player.DisplayName and player.DisplayName:lower():find(name, 1, true)) then
+				return player
+			end
+		end
+		
+		return nil
 	end
 	
 	-- Функция для защиты от падения
@@ -289,14 +202,6 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 				return
 			end
 			
-			-- Проверяем, существует ли игрок еще
-			if not Players:FindFirstChild(targetPlayer.Name) then
-				textBox.Text = ""
-				textBox.PlaceholderText = "Игрок вышел из игры"
-				stopFlinging()
-				return
-			end
-			
 			-- Телепортируемся к цели
 			hrp.CFrame = targetHRP.CFrame
 			
@@ -331,7 +236,8 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 			return
 		end
 		
-		local targetPlayer = Players:FindFirstChild(textBox.Text)
+		-- Используем улучшенную функцию поиска игрока
+		local targetPlayer = findPlayerByName(textBox.Text)
 		if not targetPlayer then
 			textBox.Text = ""
 			textBox.PlaceholderText = "Игрок не найден!"
@@ -344,6 +250,13 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 			return
 		end
 		
+		-- Проверяем, что у игрока есть персонаж
+		if not targetPlayer.Character then
+			textBox.Text = ""
+			textBox.PlaceholderText = "У игрока нет персонажа!"
+			return
+		end
+		
 		isFlinging = true
 		toggleButton.Text = "STOP"
 		toggleButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
@@ -351,44 +264,9 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 		flingTarget(targetPlayer)
 	end)
 	
-	-- Кнопка выпадающего списка
-	dropdownButton.MouseButton1Click:Connect(function()
-		toggleDropdown()
-	end)
-	
-	-- Закрытие dropdown при клике вне его
-	local function onInputBegan(input, gameProcessed)
-		if gameProcessed then return end
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			local mousePos = game:GetService("UserInputService"):GetMouseLocation()
-			local dropdownAbsolutePos = dropdownFrame.AbsolutePosition
-			local dropdownAbsoluteSize = dropdownFrame.AbsoluteSize
-			
-			if dropdownFrame.Visible then
-				if not (mousePos.X >= dropdownAbsolutePos.X and mousePos.X <= dropdownAbsolutePos.X + dropdownAbsoluteSize.X and
-					   mousePos.Y >= dropdownAbsolutePos.Y and mousePos.Y <= dropdownAbsolutePos.Y + dropdownAbsoluteSize.Y) then
-					dropdownFrame.Visible = false
-					dropdownFrame.Size = UDim2.new(0, 158, 0, 0)
-				end
-			end
-		end
-	end
-	
-	game:GetService("UserInputService").InputBegan:Connect(onInputBegan)
-	
 	-- Автоматическая остановка при выходе из игры
 	game:GetService("Players").LocalPlayer.CharacterRemoving:Connect(function()
 		stopFlinging()
-	end)
-	
-	-- Очистка соединений при уничтожении GUI
-	Frame.Destroying:Connect(function()
-		if playerAddedConnection then
-			playerAddedConnection:Disconnect()
-		end
-		if playerRemovingConnection then
-			playerRemovingConnection:Disconnect()
-		end
 	end)
 	
 end
