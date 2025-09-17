@@ -1,7 +1,7 @@
 -- Touch fling gui by nickname
 
--- Gui to Lua (Test version)
--- Version: 0.1
+-- Gui to Lua (VIP VERSION)
+-- Version: 6.9
 
 -- Instances:
 
@@ -17,7 +17,7 @@ local TextButton = Instance.new("TextButton")
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
-print("Join to TGK HydrogenHUB")
+print("sub to DuplexScripts")
 
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
