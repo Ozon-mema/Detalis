@@ -1,31 +1,6 @@
--- Функция для отображения прогресса загрузки
-local function ShowLoadingProgress()
-    local progress = 0
-    local interval = 0.05 -- Интервал обновления в секундах
-    
-    while progress < 100 do
-        progress = math.min(progress + math.random(2, 5), 100)
-        local bars = string.rep("#", math.floor(progress / 10))
-        local spaces = string.rep(" ", 10 - math.floor(progress / 10))
-        
-        -- Очищаем предыдущую строку и выводим новую
-        print("\r\27[32m" .. string.format("%3d%% [%s%s]", progress, bars, spaces) .. "\27[0m")
-        
-        wait(interval)
-    end
-    
-    -- Финальное сообщение
-    print("\r\27[32m100% [##########] Loaded!\27[0m")
-end
+Print("Loading...")
 
--- Запуск отображения прогресса
-spawn(ShowLoadingProgress)
-
-
-
-wait(5)
-
-
+Wait(3)
 
 
 -- Сервисы
@@ -550,3 +525,5 @@ end)
 -- Обработка присоединения/выхода игроков
 Players.PlayerAdded:Connect(RefreshPlayerList)
 Players.PlayerRemoving:Connect(function(player)
+
+Print("Loaded(⁠・⁠o⁠・⁠)")
