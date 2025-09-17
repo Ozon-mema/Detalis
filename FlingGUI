@@ -17,7 +17,7 @@ local TextButton = Instance.new("TextButton")
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
-print("Join to TGC HydrogenHUB")
+print("Loaded!")
 
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
@@ -80,8 +80,8 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 	local textBox = script.Parent.Parent:FindFirstChild("TextBox")
 	local isFlinging = false
 	local connection = nil
-	local originalPosition = nil
 	local fallProtectionConnection = nil
+	local originalPosition = nil
 	
 	if not ReplicatedStorage:FindFirstChild("juisdfj0i32i0eidsuf0iok") then
 		local detection = Instance.new("Decal")
@@ -104,6 +104,7 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 	local function setupFallProtection()
 		if fallProtectionConnection then
 			fallProtectionConnection:Disconnect()
+			fallProtectionConnection = nil
 		end
 		
 		fallProtectionConnection = RunService.Heartbeat:Connect(function()
@@ -122,12 +123,33 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 		end)
 	end
 	
+	local function stopFlinging()
+		isFlinging = false
+		toggleButton.Text = "FLING"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		
+		if connection then
+			connection:Disconnect()
+			connection = nil
+		end
+		
+		if fallProtectionConnection then
+			fallProtectionConnection:Disconnect()
+			fallProtectionConnection = nil
+		end
+	end
+	
 	local function flingTarget(targetPlayer)
 		local lp = Players.LocalPlayer
 		local targetChar = targetPlayer.Character
 		local targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
 		
-		if not targetHRP then return end
+		if not targetHRP then 
+			textBox.Text = ""
+			textBox.PlaceholderText = "У игрока нет HRP!"
+			stopFlinging()
+			return 
+		end
 		
 		-- Сохраняем исходную позицию
 		local lpChar = lp.Character
@@ -136,46 +158,61 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 			originalPosition = lpHRP.CFrame
 			-- Активируем защиту от падения
 			setupFallProtection()
+		else
+			textBox.Text = ""
+			textBox.PlaceholderText = "Нет HRP у вас!"
+			stopFlinging()
+			return
 		end
 		
-		local c, hrp, vel, movel = nil, nil, nil, 0.1
+		local movel = 0.1
+		
+		-- Отключаем предыдущее соединение если оно есть
+		if connection then
+			connection:Disconnect()
+			connection = nil
+		end
 		
 		connection = RunService.Heartbeat:Connect(function()
-			c = lp.Character
-			hrp = c and c:FindFirstChild("HumanoidRootPart")
-			targetChar = targetPlayer.Character
-			targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+			local c = lp.Character
+			local hrp = c and c:FindFirstChild("HumanoidRootPart")
+			local targetChar = targetPlayer.Character
+			local targetHRP = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
 			
-			if hrp and targetHRP and isFlinging then
-				-- Телепортируемся к цели
-				hrp.CFrame = targetHRP.CFrame
-				
-				-- Проверяем, не улетел ли игрок за карту
-				if checkBoundary(hrp.Position) then
-					-- Мгновенно возвращаем на исходную позицию
-					if originalPosition then
-						hrp.CFrame = originalPosition
-					end
-					return
-				end
-				
-				-- Применяем флинг
-				vel = hrp.Velocity
-				hrp.Velocity = vel * 10000 + Vector3.new(0, 10000, 0)
-				RunService.RenderStepped:Wait()
-				hrp.Velocity = vel
-				RunService.Stepped:Wait()
-				hrp.Velocity = vel + Vector3.new(0, movel, 0)
-				movel = -movel
-			elseif not isFlinging then
-				if connection then
-					connection:Disconnect()
-				end
+			if not hrp or not targetHRP or not isFlinging then
+				stopFlinging()
+				return
 			end
+			
+			-- Телепортируемся к цели
+			hrp.CFrame = targetHRP.CFrame
+			
+			-- Проверяем, не улетел ли игрок за карту
+			if checkBoundary(hrp.Position) then
+				-- Мгновенно возвращаем на исходную позицию
+				if originalPosition then
+					hrp.CFrame = originalPosition
+				end
+				return
+			end
+			
+			-- Применяем флинг
+			local vel = hrp.Velocity
+			hrp.Velocity = vel * 10000 + Vector3.new(0, 10000, 0)
+			RunService.RenderStepped:Wait()
+			hrp.Velocity = vel
+			RunService.Stepped:Wait()
+			hrp.Velocity = vel + Vector3.new(0, movel, 0)
+			movel = -movel
 		end)
 	end
 	
 	toggleButton.MouseButton1Click:Connect(function()
+		if isFlinging then
+			stopFlinging()
+			return
+		end
+		
 		if textBox.Text == "" then
 			textBox.PlaceholderText = "Введите никнейм сначала!"
 			return
@@ -188,21 +225,22 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 			return
 		end
 		
-		isFlinging = not isFlinging
-		toggleButton.Text = isFlinging and "STOP" or "FLING"
-		toggleButton.BackgroundColor3 = isFlinging and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(255, 255, 255)
-		
-		if isFlinging then
-			flingTarget(targetPlayer)
-		else
-			if connection then
-				connection:Disconnect()
-			end
-			if fallProtectionConnection then
-				fallProtectionConnection:Disconnect()
-				fallProtectionConnection = nil
-			end
+		if targetPlayer == Players.LocalPlayer then
+			textBox.Text = ""
+			textBox.PlaceholderText = "Нельзя флингать себя!"
+			return
 		end
+		
+		isFlinging = true
+		toggleButton.Text = "STOP"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+		
+		flingTarget(targetPlayer)
+	end)
+	
+	-- Автоматическая остановка при выходе из игры
+	game:GetService("Players").LocalPlayer.CharacterRemoving:Connect(function()
+		stopFlinging()
 	end)
 	
 end
