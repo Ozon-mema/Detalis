@@ -1,40 +1,381 @@
--- Touch fling gui by nickname
-
--- Gui to Lua (VIP VERSION)
--- Version: 6.9
+-- Advanced Touch Fling by Nickname with Auto-Complete
 
 -- Instances:
-
 local ScreenGui = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
 local Frame_2 = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
+local TargetLabel = Instance.new("TextLabel")
 local TextBox = Instance.new("TextBox")
 local TextButton = Instance.new("TextButton")
+local StatusLabel = Instance.new("TextLabel")
 
---Properties:
-
+-- Properties:
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
-print("sub to HydrogenHUB tg")
 
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
 Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Frame.BorderSizePixel = 0
 Frame.Position = UDim2.new(0.388539821, 0, 0.427821517, 0)
-Frame.Size = UDim2.new(0, 158, 0, 140)
+Frame.Size = UDim2.new(0, 220, 0, 210)
 
 Frame_2.Parent = Frame
 Frame_2.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 Frame_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Frame_2.BorderSizePixel = 0
-Frame_2.Size = UDim2.new(0, 158, 0, 25)
+Frame_2.Size = UDim2.new(0, 220, 0, 25)
 
 TextLabel.Parent = Frame_2
 TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.BackgroundTransparency = 1.000
+TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel.BorderSizePixel = 0
+TextLabel.Size = UDim2.new(0, 220, 0, 25)
+TextLabel.Font = Enum.Font.Sarpanch
+TextLabel.Text = "Advanced Fling"
+TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel.TextSize = 20.000
+
+TargetLabel.Parent = Frame
+TargetLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TargetLabel.BackgroundTransparency = 1.000
+TargetLabel.Position = UDim2.new(0.05, 0, 0.15, 0)
+TargetLabel.Size = UDim2.new(0, 200, 0, 20)
+TargetLabel.Font = Enum.Font.SourceSans
+TargetLabel.Text = "Цель: Не выбрана"
+TargetLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TargetLabel.TextSize = 14.000
+TargetLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+TextBox.Parent = Frame
+TextBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
+TextBox.BorderSizePixel = 2
+TextBox.Position = UDim2.new(0.05, 0, 0.3, 0)
+TextBox.Size = UDim2.new(0, 200, 0, 25)
+TextBox.Font = Enum.Font.SourceSans
+TextBox.PlaceholderText = "Введите часть ника"
+TextBox.Text = ""
+TextBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+TextBox.TextSize = 14.000
+
+TextButton.Parent = Frame
+TextButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextButton.BorderColor3 = Color3.fromRGB(255, 255, 255)
+TextButton.BorderSizePixel = 0
+TextButton.Position = UDim2.new(0.05, 0, 0.55, 0)
+TextButton.Size = UDim2.new(0, 200, 0, 30)
+TextButton.Font = Enum.Font.SourceSansItalic
+TextButton.Text = "START FLING"
+TextButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+TextButton.TextSize = 16.000
+
+StatusLabel.Parent = Frame
+StatusLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+StatusLabel.BackgroundTransparency = 1.000
+StatusLabel.Position = UDim2.new(0.05, 0, 0.75, 0)
+StatusLabel.Size = UDim2.new(0, 200, 0, 20)
+StatusLabel.Font = Enum.Font.SourceSans
+StatusLabel.Text = "Статус: Ожидание"
+StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+StatusLabel.TextSize = 14.000
+
+-- Scripts:
+local function MainScript()
+	local script = TextButton:FindFirstChild("LocalScript") or Instance.new('LocalScript', TextButton)
+	
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local RunService = game:GetService("RunService")
+	local Players = game:GetService("Players")
+	local Workspace = game:GetService("Workspace")
+	
+	local localPlayer = Players.LocalPlayer
+	local toggleButton = script.Parent
+	local textBox = Frame:FindFirstChild("TextBox")
+	local statusLabel = Frame:FindFirstChild("StatusLabel")
+	local targetLabel = Frame:FindFirstChild("TargetLabel")
+	
+	local isFlinging = false
+	local originalCFrame = nil
+	local originalCameraCFrame = nil
+	local flingConnection = nil
+	local cameraConnection = nil
+	local monitorConnection = nil
+	local currentTargetPlayer = nil
+	
+	-- Функция для поиска игрока по части никнейма
+	local function findPlayerByPartialName(partialName)
+		if partialName == "" then
+			return nil
+		end
+		
+		local lowerPartial = string.lower(partialName)
+		local foundPlayers = {}
+		
+		-- Ищем всех игроков, чей никнейм содержит введенную часть
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player ~= localPlayer then -- Исключаем самого себя
+				local playerName = string.lower(player.Name)
+				if string.find(playerName, lowerPartial, 1, true) then
+					table.insert(foundPlayers, player)
+				end
+			end
+		end
+		
+		-- Возвращаем первого найденного игрока
+		if #foundPlayers > 0 then
+			return foundPlayers[1]
+		end
+		
+		return nil
+	end
+	
+	-- Функция для обновления информации о цели
+	local function updateTargetInfo(player)
+		if player then
+			targetLabel.Text = "Цель: " .. player.Name
+			targetLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+		else
+			targetLabel.Text = "Цель: Не выбрана"
+			targetLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		end
+		currentTargetPlayer = player
+	end
+	
+	-- Обработчик изменения текста в TextBox
+	textBox:GetPropertyChangedSignal("Text"):Connect(function()
+		local text = textBox.Text
+		if text == "" then
+			updateTargetInfo(nil)
+			return
+		end
+		
+		local foundPlayer = findPlayerByPartialName(text)
+		updateTargetInfo(foundPlayer)
+		
+		-- Если игрок не найден, показываем сообщение
+		if not foundPlayer then
+			targetLabel.Text = "Цель: Игрок не найден"
+			targetLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+		end
+	end)
+	
+	-- Функция для проверки, улетел ли игрок за карту
+	local function isPlayerOutOfBounds(player)
+		local character = player.Character
+		if not character then return true end
+		
+		local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+		if not humanoidRootPart then return true end
+		
+		local position = humanoidRootPart.Position
+		local mapBoundary = 5000 -- Граница карты
+		
+		-- Проверяем, не вышел ли игрок за пределы карты
+		if math.abs(position.X) > mapBoundary or 
+		   math.abs(position.Y) > mapBoundary or 
+		   math.abs(position.Z) > mapBoundary then
+			return true
+		end
+		
+		-- Проверяем, не упал ли игрок под карту
+		if position.Y < -500 then
+			return true
+		end
+		
+		return false
+	end
+	
+	-- Функция для сохранения оригинальной позиции и камеры
+	local function saveOriginalState()
+		local character = localPlayer.Character
+		if character then
+			local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+			if humanoidRootPart then
+				originalCFrame = humanoidRootPart.CFrame
+			end
+		end
+		
+		local camera = Workspace.CurrentCamera
+		if camera then
+			originalCameraCFrame = camera.CFrame
+		end
+	end
+	
+	-- Функция для восстановления оригинального состояния
+	local function restoreOriginalState()
+		isFlinging = false
+		
+		-- Восстанавливаем позицию игрока
+		local character = localPlayer.Character
+		if character and originalCFrame then
+			local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+			if humanoidRootPart then
+				humanoidRootPart.CFrame = originalCFrame
+			end
+		end
+		
+		-- Восстанавливаем камеру
+		local camera = Workspace.CurrentCamera
+		if camera and originalCameraCFrame then
+			camera.CFrame = originalCameraCFrame
+			camera.CameraType = Enum.CameraType.Custom
+		end
+		
+		-- Отключаем все соединения
+		if flingConnection then
+			flingConnection:Disconnect()
+			flingConnection = nil
+		end
+		
+		if cameraConnection then
+			cameraConnection:Disconnect()
+			cameraConnection = nil
+		end
+		
+		if monitorConnection then
+			monitorConnection:Disconnect()
+			monitorConnection = nil
+		end
+		
+		-- Обновляем UI
+		toggleButton.Text = "START FLING"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		statusLabel.Text = "Статус: Остановлено"
+	end
+	
+	-- Основная функция флинга
+	local function startFling(targetPlayer)
+		if not targetPlayer or not targetPlayer.Character then
+			statusLabel.Text = "Ошибка: Игрок не найден"
+			return
+		end
+		
+		-- Проверяем, не пытается ли игрок флингать самого себя
+		if targetPlayer == localPlayer then
+			statusLabel.Text = "Ошибка: Нельзя флингать себя!"
+			targetLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+			return
+		end
+		
+		saveOriginalState()
+		isFlinging = true
+		statusLabel.Text = "Статус: Флинг активен"
+		
+		local targetCharacter = targetPlayer.Character
+		local targetHRP = targetCharacter:FindFirstChild("HumanoidRootPart")
+		local localCharacter = localPlayer.Character
+		local localHRP = localCharacter and localCharacter:FindFirstChild("HumanoidRootPart")
+		
+		if not targetHRP or not localHRP then
+			restoreOriginalState()
+			return
+		end
+		
+		-- Настраиваем камеру на цель
+		local camera = Workspace.CurrentCamera
+		if camera then
+			camera.CameraType = Enum.CameraType.Scriptable
+			cameraConnection = RunService.RenderStepped:Connect(function()
+				if isFlinging and targetHRP then
+					camera.CFrame = CFrame.new(targetHRP.Position + Vector3.new(0, 5, 10), targetHRP.Position)
+				end
+			end)
+		end
+		
+		-- Мониторинг положения цели
+		monitorConnection = RunService.Heartbeat:Connect(function()
+			if not isFlinging or not targetPlayer or not targetPlayer.Character then
+				restoreOriginalState()
+				return
+			end
+			
+			-- Проверяем, не улетел ли целевой игрок
+			if isPlayerOutOfBounds(targetPlayer) then
+				statusLabel.Text = "Цель улетела! Возвращаем..."
+				restoreOriginalState()
+				return
+			end
+		end)
+		
+		-- Основной цикл флинга
+		flingConnection = RunService.Heartbeat:Connect(function()
+			if not isFlinging or not localHRP or not targetHRP then
+				return
+			end
+			
+			-- Агрессивный флинг с быстрым полетом
+			local currentPosition = localHRP.Position
+			local targetPosition = targetHRP.Position
+			
+			-- Вычисляем направление к цели
+			local direction = (targetPosition - currentPosition).Unit
+			
+			-- Мощный импульс к цели
+			localHRP.Velocity = direction * 500 + Vector3.new(0, 100, 0)
+			
+			-- Телепортируемся очень близко к цели для максимального эффекта
+			localHRP.CFrame = CFrame.new(targetPosition + direction * 2) * CFrame.Angles(0, math.random() * math.pi * 2, 0)
+			
+			-- Добавляем случайные вращения для хаотичного движения
+			localHRP.RotVelocity = Vector3.new(
+				math.random(-50, 50),
+				math.random(-50, 50),
+				math.random(-50, 50)
+			)
+		end)
+	end
+	
+	toggleButton.MouseButton1Click:Connect(function()
+		if isFlinging then
+			restoreOriginalState()
+			return
+		end
+		
+		if not currentTargetPlayer then
+			statusLabel.Text = "Ошибка: Выберите цель сначала"
+			return
+		end
+		
+		-- Дополнительная проверка на самофлинг
+		if currentTargetPlayer == localPlayer then
+			statusLabel.Text = "Ошибка: Нельзя флингать себя!"
+			targetLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+			return
+		end
+		
+		toggleButton.Text = "STOP FLING"
+		toggleButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+		statusLabel.Text = "Статус: Запуск..."
+		
+		-- Запускаем флинг с небольшой задержкой
+		wait(0.5)
+		startFling(currentTargetPlayer)
+	end)
+	
+	-- Автоматическая остановка при выходе из игры
+	localPlayer.CharacterRemoving:Connect(function()
+		if isFlinging then
+			restoreOriginalState()
+		end
+	end)
+	
+	-- Инициализация
+	updateTargetInfo(nil)
+end
+
+coroutine.wrap(MainScript)()
+
+local function DragScript()
+	local script = Instance.new('LocalScript', Frame)
+	script.Parent.Active = true
+	script.Parent.Draggable = true
+end
+
+coroutine.wrap(DragScript)()TextLabel.BackgroundTransparency = 1.000
 TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
 TextLabel.BorderSizePixel = 0
 TextLabel.Position = UDim2.new(0.112792775, 0, -0.0151660154, 0)
@@ -151,3 +492,9 @@ local function QCJQJL_fake_script() -- Frame.LocalScript
 	script.Parent.Draggable = true
 end
 coroutine.wrap(QCJQJL_fake_script)()
+
+
+
+wait(3)
+
+print("Loaded! Sub to Tg GydrodenHUB!🔗")
