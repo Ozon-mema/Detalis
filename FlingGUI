@@ -17,7 +17,7 @@ local TextButton = Instance.new("TextButton")
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
-print("sub to DuplexScripts")
+print("Join to TGC HydrogenHUB")
 
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
@@ -81,6 +81,7 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 	local isFlinging = false
 	local connection = nil
 	local originalPosition = nil
+	local fallProtectionConnection = nil
 	
 	if not ReplicatedStorage:FindFirstChild("juisdfj0i32i0eidsuf0iok") then
 		local detection = Instance.new("Decal")
@@ -91,6 +92,34 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 	local function checkBoundary(position)
 		local boundary = 2000
 		return math.abs(position.X) > boundary or math.abs(position.Y) > boundary or math.abs(position.Z) > boundary
+	end
+	
+	-- Функция для проверки падения под карту
+	local function checkFallUnderMap(position)
+		local deathHeight = -100 -- Высота, при достижении которой считается, что игрок упал под карту
+		return position.Y < deathHeight
+	end
+	
+	-- Функция для защиты от падения
+	local function setupFallProtection()
+		if fallProtectionConnection then
+			fallProtectionConnection:Disconnect()
+		end
+		
+		fallProtectionConnection = RunService.Heartbeat:Connect(function()
+			local lp = Players.LocalPlayer
+			local char = lp.Character
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+			
+			if hrp and originalPosition then
+				-- Проверяем, не упал ли игрок под карту
+				if checkFallUnderMap(hrp.Position) then
+					-- Мгновенно возвращаем на исходную позицию
+					hrp.CFrame = originalPosition
+					hrp.Velocity = Vector3.new(0, 0, 0)
+				end
+			end
+		end)
 	end
 	
 	local function flingTarget(targetPlayer)
@@ -105,6 +134,8 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 		local lpHRP = lpChar and lpChar:FindFirstChild("HumanoidRootPart")
 		if lpHRP then
 			originalPosition = lpHRP.CFrame
+			-- Активируем защиту от падения
+			setupFallProtection()
 		end
 		
 		local c, hrp, vel, movel = nil, nil, nil, 0.1
@@ -166,6 +197,10 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 		else
 			if connection then
 				connection:Disconnect()
+			end
+			if fallProtectionConnection then
+				fallProtectionConnection:Disconnect()
+				fallProtectionConnection = nil
 			end
 		end
 	end)
