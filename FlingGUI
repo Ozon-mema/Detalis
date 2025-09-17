@@ -1,6 +1,5 @@
 -- Touch fling gui by nickname
-
--- Version: 1
+-- Version: 6.9
 
 -- Instances:
 
@@ -16,7 +15,7 @@ local TextButton = Instance.new("TextButton")
 ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
-print("sub to DuplexScripts")
+print("Loaded")
 
 Frame.Parent = ScreenGui
 Frame.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
@@ -97,25 +96,6 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 	local function checkFallUnderMap(position)
 		local deathHeight = -100 -- Высота, при достижении которой считается, что игрок упал под карту
 		return position.Y < deathHeight
-	end
-	
-	-- Функция для поиска игрока по никнейму (исправленная)
-	local function findPlayerByName(name)
-		-- Проверяем точное совпадение
-		local exactMatch = Players:FindFirstChild(name)
-		if exactMatch then
-			return exactMatch
-		end
-		
-		-- Если точного совпадения нет, ищем по частичному совпадению (без учета регистра)
-		name = name:lower()
-		for _, player in ipairs(Players:GetPlayers()) do
-			if player.Name:lower():find(name, 1, true) or (player.DisplayName and player.DisplayName:lower():find(name, 1, true)) then
-				return player
-			end
-		end
-		
-		return nil
 	end
 	
 	-- Функция для защиты от падения
@@ -236,8 +216,7 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 			return
 		end
 		
-		-- Используем улучшенную функцию поиска игрока
-		local targetPlayer = findPlayerByName(textBox.Text)
+		local targetPlayer = Players:FindFirstChild(textBox.Text)
 		if not targetPlayer then
 			textBox.Text = ""
 			textBox.PlaceholderText = "Игрок не найден!"
@@ -247,13 +226,6 @@ local function IIMAWH_fake_script() -- TextButton.LocalScript
 		if targetPlayer == Players.LocalPlayer then
 			textBox.Text = ""
 			textBox.PlaceholderText = "Нельзя флингать себя!"
-			return
-		end
-		
-		-- Проверяем, что у игрока есть персонаж
-		if not targetPlayer.Character then
-			textBox.Text = ""
-			textBox.PlaceholderText = "У игрока нет персонажа!"
 			return
 		end
 		
