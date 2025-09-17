@@ -1,0 +1,104 @@
+local function getMurdererTarget()
+    local data = ReplicatedStorage:FindFirstChild("GetPlayerData", true):InvokeServer()
+    for plr, plrData in pairs(data) do
+        if plrData.Role == "Murderer" and not plrData.Dead then
+            local player = Players:FindFirstChild(plr)
+            if player then
+                if player == LocalPlayer then return nil, true end
+                local char = player.Character
+                if char then
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    if hrp then return hrp.Position, false end
+                    local head = char:FindFirstChild("Head")
+                    if head then return head.Position, false end
+                end
+            end
+        end
+    end
+    return nil, false
+end
+
+local function AutoShootMurder()
+    -- Проверяем, что персонаж существует
+    if not Char or not Hum then
+        OrionLib:MakeNotification({
+            Name = "Ошибка",
+            Content = "Персонаж не найден",
+            Image = "rbxassetid://7733658504",
+            Time = 3
+        })
+        return
+    end
+
+    -- Ищем оружие в инвентаре
+    local gun = backpack:FindFirstChild("Gun") or Char:FindFirstChild("Gun")
+    
+    -- Если оружия нет в руках, но есть в инвентаре - берем его
+    if not Char:FindFirstChild("Gun") and backpack:FindFirstChild("Gun") then
+        Hum:EquipTool(backpack:FindFirstChild("Gun"))
+        task.wait(0.2) -- Ждем пока оружие перейдет в руки
+    end
+    
+    -- Проверяем, что оружие теперь в руках
+    gun = Char:FindFirstChild("Gun")
+    if not gun then
+        OrionLib:MakeNotification({
+            Name = "Ошибка",
+            Content = "Оружие не найдено",
+            Image = "rbxassetid://7733658504",
+            Time = 3
+        })
+        return
+    end
+
+    -- Получаем цель (убийцу)
+    local targetPos, isSelf = getMurdererTarget()
+    
+    if not targetPos then
+        OrionLib:MakeNotification({
+            Name = "Информация",
+            Content = "Убийца не найден или мертв",
+            Image = "rbxassetid://7733658504",
+            Time = 3
+        })
+        return
+    end
+    
+    if isSelf then
+        OrionLib:MakeNotification({
+            Name = "Ошибка",
+            Content = "Вы являетесь убийцей",
+            Image = "rbxassetid://7733658504",
+            Time = 3
+        })
+        return
+    end
+
+    -- Производим выстрел
+    pcall(function()
+        local knifeScript = gun:FindFirstChild("KnifeLocal")
+        if knifeScript then
+            local createBeam = knifeScript:FindFirstChild("CreateBeam")
+            if createBeam then
+                local remoteFunction = createBeam:FindFirstChild("RemoteFunction")
+                if remoteFunction then
+                    remoteFunction:InvokeServer(1, targetPos, "AH2")
+                    OrionLib:MakeNotification({
+                        Name = "Успех",
+                        Content = "Выстрел произведен в убийцу",
+                        Image = "rbxassetid://7733955511",
+                        Time = 3
+                    })
+                end
+            end
+        end
+    end)
+end
+
+-- Добавляем кнопку в интерфейс
+MainTab:AddButton({
+    Name = "Auto Shoot Murder",
+    Callback = function()
+        AutoShootMurder()
+    end
+})
