@@ -1,15 +1,17 @@
 local main = Instance.new("ScreenGui")
 local Frame = Instance.new("Frame")
-local up = Instance.new("TextButton")
-local down = Instance.new("TextButton")
-local onof = Instance.new("TextButton")
+local TitleBar = Instance.new("Frame")
 local TextLabel = Instance.new("TextLabel")
-local plus = Instance.new("TextButton")
-local speed = Instance.new("TextLabel")
-local mine = Instance.new("TextButton")
 local closebutton = Instance.new("TextButton")
 local mini = Instance.new("TextButton")
 local mini2 = Instance.new("TextButton")
+local Content = Instance.new("Frame")
+local up = Instance.new("TextButton")
+local down = Instance.new("TextButton")
+local onof = Instance.new("TextButton")
+local plus = Instance.new("TextButton")
+local speed = Instance.new("TextLabel")
+local mine = Instance.new("TextButton")
 
 main.Name = "main"
 main.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -21,147 +23,186 @@ Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 Frame.BorderColor3 = Color3.fromRGB(40, 40, 40)
 Frame.BorderSizePixel = 2
 Frame.Position = UDim2.new(0.100320168, 0, 0.379746825, 0)
-Frame.Size = UDim2.new(0, 190, 0, 57)
-Frame.Active = true
-Frame.Draggable = true
+Frame.Size = UDim2.new(0, 200, 0, 120)
+Frame.ClipsDescendants = true
+
+TitleBar.Parent = Frame
+TitleBar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+TitleBar.BorderSizePixel = 0
+TitleBar.Size = UDim2.new(1, 0, 0, 25)
+TitleBar.Active = true
+TitleBar.Draggable = true
+
+TextLabel.Parent = TitleBar
+TextLabel.BackgroundTransparency = 1
+TextLabel.Position = UDim2.new(0, 5, 0, 0)
+TextLabel.Size = UDim2.new(1, -50, 1, 0)
+TextLabel.Font = Enum.Font.SourceSansBold
+TextLabel.Text = "Fly Gui by HydrogenHUB TGK 🔗"
+TextLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+TextLabel.TextSize = 14.000
+TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+closebutton.Name = "Close"
+closebutton.Parent = TitleBar
+closebutton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+closebutton.BorderColor3 = Color3.fromRGB(60, 60, 60)
+closebutton.Position = UDim2.new(1, -25, 0, 0)
+closebutton.Size = UDim2.new(0, 25, 0, 25)
+closebutton.Font = Enum.Font.SourceSansBold
+closebutton.Text = "X"
+closebutton.TextColor3 = Color3.fromRGB(200, 200, 200)
+closebutton.TextSize = 14.000
+
+mini.Name = "minimize"
+mini.Parent = TitleBar
+mini.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mini.BorderColor3 = Color3.fromRGB(60, 60, 60)
+mini.Position = UDim2.new(1, -50, 0, 0)
+mini.Size = UDim2.new(0, 25, 0, 25)
+mini.Font = Enum.Font.SourceSansBold
+mini.Text = "_"
+mini.TextColor3 = Color3.fromRGB(200, 200, 200)
+mini.TextSize = 14.000
+
+mini2.Name = "minimize2"
+mini2.Parent = Frame
+mini2.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mini2.BorderColor3 = Color3.fromRGB(60, 60, 60)
+mini2.Position = UDim2.new(1, -25, 0, 25)
+mini2.Size = UDim2.new(0, 25, 0, 25)
+mini2.Visible = false
+mini2.Font = Enum.Font.SourceSansBold
+mini2.Text = "+"
+mini2.TextColor3 = Color3.fromRGB(200, 200, 200)
+mini2.TextSize = 14.000
+
+Content.Parent = Frame
+Content.BackgroundTransparency = 1
+Content.Position = UDim2.new(0, 0, 0, 25)
+Content.Size = UDim2.new(1, 0, 1, -25)
 
 up.Name = "up"
-up.Parent = Frame
+up.Parent = Content
 up.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 up.BorderColor3 = Color3.fromRGB(60, 60, 60)
-up.Size = UDim2.new(0, 44, 0, 28)
+up.Position = UDim2.new(0.5, -22, 0, 5)
+up.Size = UDim2.new(0, 44, 0, 25)
 up.Font = Enum.Font.SourceSans
 up.Text = "UP"
 up.TextColor3 = Color3.fromRGB(200, 200, 200)
 up.TextSize = 14.000
 
 down.Name = "down"
-down.Parent = Frame
+down.Parent = Content
 down.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 down.BorderColor3 = Color3.fromRGB(60, 60, 60)
-down.Position = UDim2.new(0, 0, 0.491228074, 0)
-down.Size = UDim2.new(0, 44, 0, 28)
+down.Position = UDim2.new(0.5, -22, 0, 35)
+down.Size = UDim2.new(0, 44, 0, 25)
 down.Font = Enum.Font.SourceSans
 down.Text = "DOWN"
 down.TextColor3 = Color3.fromRGB(200, 200, 200)
 down.TextSize = 14.000
 
 onof.Name = "onof"
-onof.Parent = Frame
+onof.Parent = Content
 onof.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 onof.BorderColor3 = Color3.fromRGB(60, 60, 60)
-onof.Position = UDim2.new(0.702823281, 0, 0.491228074, 0)
-onof.Size = UDim2.new(0, 56, 0, 28)
+onof.Position = UDim2.new(0.5, -22, 0, 65)
+onof.Size = UDim2.new(0, 44, 0, 25)
 onof.Font = Enum.Font.SourceSans
 onof.Text = "FLY"
 onof.TextColor3 = Color3.fromRGB(200, 200, 200)
 onof.TextSize = 14.000
 
-TextLabel.Parent = Frame
-TextLabel.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-TextLabel.BorderColor3 = Color3.fromRGB(60, 60, 60)
-TextLabel.Position = UDim2.new(0.469327301, 0, 0, 0)
-TextLabel.Size = UDim2.new(0, 100, 0, 28)
-TextLabel.Font = Enum.Font.SourceSansBold
-TextLabel.Text = "Fly Gui by HydrogenHUB TGK 🔗"
-TextLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-TextLabel.TextScaled = true
-TextLabel.TextSize = 14.000
-TextLabel.TextWrapped = true
-
 plus.Name = "plus"
-plus.Parent = Frame
+plus.Parent = Content
 plus.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 plus.BorderColor3 = Color3.fromRGB(60, 60, 60)
-plus.Position = UDim2.new(0.231578946, 0, 0, 0)
-plus.Size = UDim2.new(0, 45, 0, 28)
+plus.Position = UDim2.new(0.75, -22, 0, 5)
+plus.Size = UDim2.new(0, 44, 0, 25)
 plus.Font = Enum.Font.SourceSans
 plus.Text = "+"
 plus.TextColor3 = Color3.fromRGB(200, 200, 200)
-plus.TextScaled = true
 plus.TextSize = 14.000
-plus.TextWrapped = true
 
 speed.Name = "speed"
-speed.Parent = Frame
+speed.Parent = Content
 speed.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 speed.BorderColor3 = Color3.fromRGB(60, 60, 60)
-speed.Position = UDim2.new(0.468421042, 0, 0.491228074, 0)
-speed.Size = UDim2.new(0, 44, 0, 28)
+speed.Position = UDim2.new(0.75, -22, 0, 35)
+speed.Size = UDim2.new(0, 44, 0, 25)
 speed.Font = Enum.Font.SourceSans
 speed.Text = "1"
 speed.TextColor3 = Color3.fromRGB(200, 200, 200)
-speed.TextScaled = true
 speed.TextSize = 14.000
-speed.TextWrapped = true
 
 mine.Name = "mine"
-mine.Parent = Frame
+mine.Parent = Content
 mine.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 mine.BorderColor3 = Color3.fromRGB(60, 60, 60)
-mine.Position = UDim2.new(0.231578946, 0, 0.491228074, 0)
-mine.Size = UDim2.new(0, 45, 0, 29)
+mine.Position = UDim2.new(0.75, -22, 0, 65)
+mine.Size = UDim2.new(0, 44, 0, 25)
 mine.Font = Enum.Font.SourceSans
 mine.Text = "-"
 mine.TextColor3 = Color3.fromRGB(200, 200, 200)
-mine.TextScaled = true
 mine.TextSize = 14.000
-mine.TextWrapped = true
 
-closebutton.Name = "Close"
-closebutton.Parent = main.Frame
-closebutton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-closebutton.BorderColor3 = Color3.fromRGB(60, 60, 60)
-closebutton.Font = "SourceSans"
-closebutton.Size = UDim2.new(0, 45, 0, 28)
-closebutton.Text = "X"
-closebutton.TextColor3 = Color3.fromRGB(200, 200, 200)
-closebutton.TextSize = 20
-closebutton.Position =  UDim2.new(0, 0, -1, 27)
+-- Улучшенное перетаскивание для мобильных устройств
+local UserInputService = game:GetService("UserInputService")
+local dragging
+local dragInput
+local dragStart
+local startPos
 
-mini.Name = "minimize"
-mini.Parent = main.Frame
-mini.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-mini.BorderColor3 = Color3.fromRGB(60, 60, 60)
-mini.Font = "SourceSans"
-mini.Size = UDim2.new(0, 45, 0, 28)
-mini.Text = "-"
-mini.TextColor3 = Color3.fromRGB(200, 200, 200)
-mini.TextSize = 30
-mini.Position = UDim2.new(0, 44, -1, 27)
+local function update(input)
+	local delta = input.Position - dragStart
+	Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
 
-mini2.Name = "minimize2"
-mini2.Parent = main.Frame
-mini2.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-mini2.BorderColor3 = Color3.fromRGB(60, 60, 60)
-mini2.Font = "SourceSans"
-mini2.Size = UDim2.new(0, 45, 0, 28)
-mini2.Text = "+"
-mini2.TextColor3 = Color3.fromRGB(200, 200, 200)
-mini2.TextSize = 30
-mini2.Position = UDim2.new(0, 44, -1, 57)
-mini2.Visible = false
+TitleBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = Frame.Position
+		
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+TitleBar.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
+end)
 
 speeds = 1
-
 local speaker = game:GetService("Players").LocalPlayer
-
 local chr = game.Players.LocalPlayer.Character
 local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
-
 nowe = false
 
 game:GetService("StarterGui"):SetCore("SendNotification", { 
-	Title = "Fly Gui by HydrogenHUB TGK 🔗";
-	Text = "Fly GUI loaded successfully";
-	Icon = "rbxthumb://type=Asset&id=5107182114&w=150&h=150"})
-Duration = 5;
+	Title = "Fly Gui by HydrogenHUB TGK 🔗",
+	Text = "Fly GUI loaded successfully",
+	Icon = "rbxthumb://type=Asset&id=5107182114&w=150&h=150",
+	Duration = 5
+})
 
+-- Остальной функционал кнопок (без изменений)
 onof.MouseButton1Down:connect(function()
-
 	if nowe == true then
 		nowe = false
-
 		speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing,true)
 		speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown,true)
 		speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying,true)
@@ -180,15 +221,9 @@ onof.MouseButton1Down:connect(function()
 		speaker.Character.Humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
 	else 
 		nowe = true
-
-
-
 		for i = 1, speeds do
 			spawn(function()
-
 				local hb = game:GetService("RunService").Heartbeat	
-
-
 				tpwalking = true
 				local chr = game.Players.LocalPlayer.Character
 				local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
@@ -197,13 +232,11 @@ onof.MouseButton1Down:connect(function()
 						chr:TranslateBy(hum.MoveDirection)
 					end
 				end
-
 			end)
 		end
 		game.Players.LocalPlayer.Character.Animate.Disabled = true
 		local Char = game.Players.LocalPlayer.Character
 		local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
-
 		for i,v in next, Hum:GetPlayingAnimationTracks() do
 			v:AdjustSpeed(0)
 		end
@@ -225,13 +258,7 @@ onof.MouseButton1Down:connect(function()
 		speaker.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
 	end
 
-
-
-
 	if game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6 then
-
-
-
 		local plr = game.Players.LocalPlayer
 		local torso = plr.Character.Torso
 		local flying = true
@@ -240,7 +267,6 @@ onof.MouseButton1Down:connect(function()
 		local lastctrl = {f = 0, b = 0, l = 0, r = 0}
 		local maxspeed = 50
 		local speed = 0
-
 
 		local bg = Instance.new("BodyGyro", torso)
 		bg.P = 9e4
@@ -254,7 +280,6 @@ onof.MouseButton1Down:connect(function()
 		end
 		while nowe == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
 			game:GetService("RunService").RenderStepped:Wait()
-
 			if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
 				speed = speed+.5+(speed/maxspeed)
 				if speed > maxspeed then
@@ -274,7 +299,6 @@ onof.MouseButton1Down:connect(function()
 			else
 				bv.velocity = Vector3.new(0,0,0)
 			end
-			--	game.Players.LocalPlayer.Character.Animate.Disabled = true
 			bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed),0,0)
 		end
 		ctrl = {f = 0, b = 0, l = 0, r = 0}
@@ -285,10 +309,6 @@ onof.MouseButton1Down:connect(function()
 		plr.Character.Humanoid.PlatformStand = false
 		game.Players.LocalPlayer.Character.Animate.Disabled = false
 		tpwalking = false
-
-
-
-
 	else
 		local plr = game.Players.LocalPlayer
 		local UpperTorso = plr.Character.UpperTorso
@@ -298,7 +318,6 @@ onof.MouseButton1Down:connect(function()
 		local lastctrl = {f = 0, b = 0, l = 0, r = 0}
 		local maxspeed = 50
 		local speed = 0
-
 
 		local bg = Instance.new("BodyGyro", UpperTorso)
 		bg.P = 9e4
@@ -312,7 +331,6 @@ onof.MouseButton1Down:connect(function()
 		end
 		while nowe == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
 			wait()
-
 			if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
 				speed = speed+.5+(speed/maxspeed)
 				if speed > maxspeed then
@@ -332,7 +350,6 @@ onof.MouseButton1Down:connect(function()
 			else
 				bv.velocity = Vector3.new(0,0,0)
 			end
-
 			bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed),0,0)
 		end
 		ctrl = {f = 0, b = 0, l = 0, r = 0}
@@ -343,19 +360,10 @@ onof.MouseButton1Down:connect(function()
 		plr.Character.Humanoid.PlatformStand = false
 		game.Players.LocalPlayer.Character.Animate.Disabled = false
 		tpwalking = false
-
-
-
 	end
-
-
-
-
-
 end)
 
 local tis
-
 up.MouseButton1Down:connect(function()
 	tis = up.MouseEnter:connect(function()
 		while tis do
@@ -364,7 +372,6 @@ up.MouseButton1Down:connect(function()
 		end
 	end)
 end)
-
 up.MouseLeave:connect(function()
 	if tis then
 		tis:Disconnect()
@@ -373,7 +380,6 @@ up.MouseLeave:connect(function()
 end)
 
 local dis
-
 down.MouseButton1Down:connect(function()
 	dis = down.MouseEnter:connect(function()
 		while dis do
@@ -382,7 +388,6 @@ down.MouseButton1Down:connect(function()
 		end
 	end)
 end)
-
 down.MouseLeave:connect(function()
 	if dis then
 		dis:Disconnect()
@@ -390,28 +395,20 @@ down.MouseLeave:connect(function()
 	end
 end)
 
-
 game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
 	wait(0.7)
 	game.Players.LocalPlayer.Character.Humanoid.PlatformStand = false
 	game.Players.LocalPlayer.Character.Animate.Disabled = false
-
 end)
-
 
 plus.MouseButton1Down:connect(function()
 	speeds = speeds + 1
 	speed.Text = speeds
 	if nowe == true then
-
-
 		tpwalking = false
 		for i = 1, speeds do
 			spawn(function()
-
 				local hb = game:GetService("RunService").Heartbeat	
-
-
 				tpwalking = true
 				local chr = game.Players.LocalPlayer.Character
 				local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
@@ -420,11 +417,11 @@ plus.MouseButton1Down:connect(function()
 						chr:TranslateBy(hum.MoveDirection)
 					end
 				end
-
 			end)
 		end
 	end
 end)
+
 mine.MouseButton1Down:connect(function()
 	if speeds == 1 then
 		speed.Text = 'cannot be less than 1'
@@ -437,10 +434,7 @@ mine.MouseButton1Down:connect(function()
 			tpwalking = false
 			for i = 1, speeds do
 				spawn(function()
-
 					local hb = game:GetService("RunService").Heartbeat	
-
-
 					tpwalking = true
 					local chr = game.Players.LocalPlayer.Character
 					local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
@@ -449,7 +443,6 @@ mine.MouseButton1Down:connect(function()
 							chr:TranslateBy(hum.MoveDirection)
 						end
 					end
-
 				end)
 			end
 		end
@@ -461,27 +454,15 @@ closebutton.MouseButton1Click:Connect(function()
 end)
 
 mini.MouseButton1Click:Connect(function()
-	up.Visible = false
-	down.Visible = false
-	onof.Visible = false
-	plus.Visible = false
-	speed.Visible = false
-	mine.Visible = false
+	Content.Visible = false
 	mini.Visible = false
 	mini2.Visible = true
-	main.Frame.BackgroundTransparency = 1
-	closebutton.Position =  UDim2.new(0, 0, -1, 57)
+	Frame.Size = UDim2.new(0, 200, 0, 25)
 end)
 
 mini2.MouseButton1Click:Connect(function()
-	up.Visible = true
-	down.Visible = true
-	onof.Visible = true
-	plus.Visible = true
-	speed.Visible = true
-	mine.Visible = true
+	Content.Visible = true
 	mini.Visible = true
 	mini2.Visible = false
-	main.Frame.BackgroundTransparency = 0 
-	closebutton.Position =  UDim2.new(0, 0, -1, 27)
+	Frame.Size = UDim2.new(0, 200, 0, 120)
 end)
