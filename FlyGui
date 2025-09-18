@@ -31,7 +31,7 @@ TitleBar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 TitleBar.BorderSizePixel = 0
 TitleBar.Size = UDim2.new(1, 0, 0, 25)
 TitleBar.Active = true
-TitleBar.Draggable = true
+TitleBar.Draggable = false -- Отключаем стандартное перетаскивание
 
 TextLabel.Parent = TitleBar
 TextLabel.BackgroundTransparency = 1
@@ -150,39 +150,56 @@ mine.TextSize = 14.000
 
 -- Улучшенное перетаскивание для мобильных устройств
 local UserInputService = game:GetService("UserInputService")
-local dragging
-local dragInput
-local dragStart
-local startPos
+local dragging = false
+local dragInput, dragStart, startPos
 
+-- Функция для обновления позиции фрейма
 local function update(input)
 	local delta = input.Position - dragStart
-	Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	Frame.Position = UDim2.new(
+		startPos.X.Scale, 
+		startPos.X.Offset + delta.X, 
+		startPos.Y.Scale, 
+		startPos.Y.Offset + delta.Y
+	)
 end
 
+-- Обработка начала перетаскивания
 TitleBar.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		dragging = true
 		dragStart = input.Position
 		startPos = Frame.Position
 		
-		input.Changed:Connect(function()
+		-- Захват ввода для предотвращения потери фокуса
+		local connection
+		connection = input.Changed:Connect(function()
 			if input.UserInputState == Enum.UserInputState.End then
 				dragging = false
+				connection:Disconnect()
 			end
 		end)
 	end
 end)
 
+-- Обработка изменения ввода
 TitleBar.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+	if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and dragging then
 		dragInput = input
 	end
 end)
 
+-- Обновление позиции при перемещении
 UserInputService.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
+	if dragging and input == dragInput then
 		update(input)
+	end
+end)
+
+-- Обработка окончания перетаскивания
+UserInputService.InputEnded:Connect(function(input)
+	if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and dragging then
+		dragging = false
 	end
 end)
 
@@ -416,53 +433,3 @@ plus.MouseButton1Down:connect(function()
 					if hum.MoveDirection.Magnitude > 0 then
 						chr:TranslateBy(hum.MoveDirection)
 					end
-				end
-			end)
-		end
-	end
-end)
-
-mine.MouseButton1Down:connect(function()
-	if speeds == 1 then
-		speed.Text = 'cannot be less than 1'
-		wait(1)
-		speed.Text = speeds
-	else
-		speeds = speeds - 1
-		speed.Text = speeds
-		if nowe == true then
-			tpwalking = false
-			for i = 1, speeds do
-				spawn(function()
-					local hb = game:GetService("RunService").Heartbeat	
-					tpwalking = true
-					local chr = game.Players.LocalPlayer.Character
-					local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
-					while tpwalking and hb:Wait() and chr and hum and hum.Parent do
-						if hum.MoveDirection.Magnitude > 0 then
-							chr:TranslateBy(hum.MoveDirection)
-						end
-					end
-				end)
-			end
-		end
-	end
-end)
-
-closebutton.MouseButton1Click:Connect(function()
-	main:Destroy()
-end)
-
-mini.MouseButton1Click:Connect(function()
-	Content.Visible = false
-	mini.Visible = false
-	mini2.Visible = true
-	Frame.Size = UDim2.new(0, 200, 0, 25)
-end)
-
-mini2.MouseButton1Click:Connect(function()
-	Content.Visible = true
-	mini.Visible = true
-	mini2.Visible = false
-	Frame.Size = UDim2.new(0, 200, 0, 120)
-end)
