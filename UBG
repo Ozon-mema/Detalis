@@ -1,0 +1,341 @@
+--[[
+    HydrogenHUB Ultimate Battlegrounds
+]]
+
+Massage("HydrogenHUB", "Идет загрузка подождите...", 3)
+
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Player = Players.LocalPlayer
+-- GUI Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HydrogenHUB_GUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game:GetService("CoreGui")
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 300, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -150)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+-- Title Bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
+TitleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -30, 1, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "HydrogenHUB Ultimate Battlegrounds"
+Title.TextColor3 = Color3.fromRGB(80, 180, 255)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 14
+Title.Parent = TitleBar
+-- Close Button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Position = UDim2.new(1, -30, 0, 0)
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+CloseButton.BorderSizePixel = 0
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.TextSize = 18
+CloseButton.Parent = TitleBar
+-- Status Label
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Position = UDim2.new(0, 10, 0, 40)
+StatusLabel.Size = UDim2.new(1, -20, 0, 25)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Выберите цель для вращения"
+StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+StatusLabel.Font = Enum.Font.SourceSans
+StatusLabel.TextSize = 16
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.Parent = MainFrame
+-- Player Selection Frame
+local SelectionFrame = Instance.new("Frame")
+SelectionFrame.Position = UDim2.new(0, 10, 0, 70)
+SelectionFrame.Size = UDim2.new(1, -20, 0, 150)
+SelectionFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+SelectionFrame.BorderSizePixel = 0
+SelectionFrame.Parent = MainFrame
+-- Player List ScrollFrame
+local PlayerScrollFrame = Instance.new("ScrollingFrame")
+PlayerScrollFrame.Position = UDim2.new(0, 5, 0, 5)
+PlayerScrollFrame.Size = UDim2.new(1, -10, 1, -10)
+PlayerScrollFrame.BackgroundTransparency = 1
+PlayerScrollFrame.BorderSizePixel = 0
+PlayerScrollFrame.ScrollBarThickness = 6
+PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+PlayerScrollFrame.Parent = SelectionFrame
+-- Start Rotation Button
+local StartButton = Instance.new("TextButton")
+StartButton.Position = UDim2.new(0, 10, 0, 230)
+StartButton.Size = UDim2.new(1, -20, 0, 30)
+StartButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+StartButton.BorderSizePixel = 0
+StartButton.Text = "НАЧАТЬ ВРАЩЕНИЕ"
+StartButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+StartButton.Font = Enum.Font.SourceSansBold
+StartButton.TextSize = 16
+StartButton.Parent = MainFrame
+-- Stop Rotation Button
+local StopButton = Instance.new("TextButton")
+StopButton.Position = UDim2.new(0, 10, 0, 265)
+StopButton.Size = UDim2.new(1, -20, 0, 30)
+StopButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+StopButton.BorderSizePixel = 0
+StopButton.Text = "ОСТАНОВИТЬ ВРАЩЕНИЕ"
+StopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+StopButton.Font = Enum.Font.SourceSansBold
+StopButton.TextSize = 16
+StopButton.Parent = MainFrame
+-- Variables
+local SelectedTarget = nil
+local PlayerButtons = {}
+local RotationActive = false
+local RotationConnection = nil
+-- Function to update player list
+local function RefreshPlayerList()
+    -- Clear existing player entries
+    for _, child in pairs(PlayerScrollFrame:GetChildren()) do
+        child:Destroy()
+    end
+    PlayerButtons = {}
+    
+    -- Get players and sort them
+    local PlayerList = Players:GetPlayers()
+    table.sort(PlayerList, function(a, b) return a.Name:lower() < b.Name:lower() end)
+    
+    -- Create entries for each player
+    local yPosition = 5
+    for _, player in ipairs(PlayerList) do
+        if player ~= Player then -- Don't include yourself
+            -- Create player entry frame
+            local PlayerEntry = Instance.new("Frame")
+            PlayerEntry.Size = UDim2.new(1, -10, 0, 30)
+            PlayerEntry.Position = UDim2.new(0, 5, 0, yPosition)
+            PlayerEntry.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            PlayerEntry.BorderSizePixel = 0
+            PlayerEntry.Parent = PlayerScrollFrame
+            
+            -- Selection indicator
+            local SelectionIndicator = Instance.new("Frame")
+            SelectionIndicator.Size = UDim2.new(0, 24, 0, 24)
+            SelectionIndicator.Position = UDim2.new(0, 3, 0.5, -12)
+            SelectionIndicator.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+            SelectionIndicator.BorderSizePixel = 0
+            SelectionIndicator.Parent = PlayerEntry
+            
+            -- Checkmark (initially invisible)
+            local Checkmark = Instance.new("TextLabel")
+            Checkmark.Size = UDim2.new(1, 0, 1, 0)
+            Checkmark.BackgroundTransparency = 1
+            Checkmark.Text = "✓"
+            Checkmark.TextColor3 = Color3.fromRGB(0, 255, 0)
+            Checkmark.TextSize = 18
+            Checkmark.Font = Enum.Font.SourceSansBold
+            Checkmark.Visible = SelectedTarget == player
+            Checkmark.Parent = SelectionIndicator
+            
+            -- Player name label
+            local NameLabel = Instance.new("TextLabel")
+            NameLabel.Size = UDim2.new(1, -35, 1, 0)
+            NameLabel.Position = UDim2.new(0, 30, 0, 0)
+            NameLabel.BackgroundTransparency = 1
+            NameLabel.Text = player.Name
+            NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            NameLabel.TextSize = 16
+            NameLabel.Font = Enum.Font.SourceSans
+            NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            NameLabel.Parent = PlayerEntry
+            
+            -- Make entire entry clickable
+            local ClickArea = Instance.new("TextButton")
+            ClickArea.Size = UDim2.new(1, 0, 1, 0)
+            ClickArea.BackgroundTransparency = 1
+            ClickArea.Text = ""
+            ClickArea.ZIndex = 2
+            ClickArea.Parent = PlayerEntry
+            
+            -- Selection toggle on click
+            ClickArea.MouseButton1Click:Connect(function()
+                if SelectedTarget == player then
+                    SelectedTarget = nil
+                    Checkmark.Visible = false
+                else
+                    -- Deselect previous target
+                    if SelectedTarget and PlayerButtons[SelectedTarget.Name] then
+                        PlayerButtons[SelectedTarget.Name].Checkmark.Visible = false
+                    end
+                    
+                    SelectedTarget = player
+                    Checkmark.Visible = true
+                end
+                
+                UpdateStatus()
+            end)
+            
+            -- Store reference to this player's UI
+            PlayerButtons[player.Name] = {
+                Entry = PlayerEntry,
+                Checkmark = Checkmark
+            }
+            
+            yPosition = yPosition + 35
+        end
+    end
+    
+    -- Update scrollframe canvas size
+    PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, yPosition + 5)
+end
+-- Update status display
+local function UpdateStatus()
+    if RotationActive then
+        if SelectedTarget then
+            StatusLabel.Text = "Вращение вокруг: " .. SelectedTarget.Name
+            StatusLabel.TextColor3 = Color3.fromRGB(80, 180, 255)
+        else
+            StatusLabel.Text = "Цель не выбрана!"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+        end
+    else
+        if SelectedTarget then
+            StatusLabel.Text = "Выбрана цель: " .. SelectedTarget.Name
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        else
+            StatusLabel.Text = "Выберите цель для вращения"
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        end
+    end
+end
+-- Show notification
+local function Message(Title, Text, Time)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = Title,
+        Text = Text,
+        Duration = Time or 5
+    })
+end
+-- Function to rotate around target
+local function RotateAroundTarget()
+    if not SelectedTarget or not SelectedTarget.Parent then
+        StopRotation()
+        return
+    end
+    
+    local Character = Player.Character
+    local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+    local RootPart = Humanoid and Humanoid.RootPart
+    
+    local TargetCharacter = SelectedTarget.Character
+    local TargetRootPart = TargetCharacter and TargetCharacter:FindFirstChild("HumanoidRootPart")
+    
+    if not RootPart or not TargetRootPart then
+        return
+    end
+    
+    -- Rotation parameters
+    local radius = 5
+    local height = 3
+    local angle = 0
+    local rotationSpeed = 0.05
+    
+    -- Rotate around target
+    angle = angle + rotationSpeed
+    local offset = Vector3.new(math.sin(angle) * radius, height, math.cos(angle) * radius)
+    RootPart.CFrame = CFrame.new(TargetRootPart.Position + offset, TargetRootPart.Position)
+end
+-- Start rotation
+local function StartRotation()
+    if RotationActive then return end
+    
+    if not SelectedTarget then
+        StatusLabel.Text = "Сначала выберите цель!"
+        wait(1)
+        UpdateStatus()
+        return
+    end
+    
+    if not SelectedTarget.Parent then
+        StatusLabel.Text = "Игрок вышел из игры!"
+        SelectedTarget = nil
+        wait(1)
+        UpdateStatus()
+        return
+    end
+    
+    RotationActive = true
+    UpdateStatus()
+    Message("Запуск", "Вращение вокруг " .. SelectedTarget.Name, 2)
+    
+    -- Start rotation loop
+    RotationConnection = RunService.Heartbeat:Connect(function()
+        if not RotationActive then
+            RotationConnection:Disconnect()
+            return
+        end
+        
+        -- Check if target is still valid
+        if not SelectedTarget or not SelectedTarget.Parent or not SelectedTarget.Character then
+            StopRotation()
+            Message("Остановка", "Цель больше не доступна", 2)
+            return
+        end
+        
+        local TargetCharacter = SelectedTarget.Character
+        local Humanoid = TargetCharacter:FindFirstChildOfClass("Humanoid")
+        
+        -- Check if target is dead
+        if Humanoid and Humanoid.Health <= 0 then
+            StopRotation()
+            Message("Остановка", "Цель умерла", 2)
+            return
+        end
+        
+        -- Perform rotation
+        RotateAroundTarget()
+    end)
+end
+-- Stop rotation
+local function StopRotation()
+    if not RotationActive then return end
+    
+    RotationActive = false
+    if RotationConnection then
+        RotationConnection:Disconnect()
+        RotationConnection = nil
+    end
+    
+    UpdateStatus()
+    Message("Остановлено", "Вращение прекращено", 2)
+end
+-- Set up button connections
+StartButton.MouseButton1Click:Connect(StartRotation)
+StopButton.MouseButton1Click:Connect(StopRotation)
+CloseButton.MouseButton1Click:Connect(function()
+    StopRotation()
+    ScreenGui:Destroy()
+end)
+-- Handle player joining/leaving
+Players.PlayerAdded:Connect(RefreshPlayerList)
+Players.PlayerRemoving:Connect(function(player)
+    if SelectedTarget == player then
+        SelectedTarget = nil
+        StopRotation()
+    end
+    RefreshPlayerList()
+    UpdateStatus()
+end)
+-- Initialize
+RefreshPlayerList()
+UpdateStatus()
+-- Success message
+Message("HydrogenHUB", "Ultimate Battlegrounds успешно загружен! (⁠☉⁠｡⁠☉⁠)⁠!", 3)
