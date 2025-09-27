@@ -1,0 +1,715 @@
+-- Сервисы
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Teams = game:GetService("Teams")
+local Player = Players.LocalPlayer
+-- Настройка GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HydrogenHUBFlingGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game:GetService("CoreGui")
+-- Главный фрейм
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 300, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+-- Заголовок
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
+TitleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+-- Название
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -30, 1, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "🏆HydrogenHUB Universal Fling🏆"
+Title.TextColor3 = Color3.fromRGB(80, 180, 255)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 16
+Title.Parent = TitleBar
+-- Кнопка закрытия
+local CloseButton = Instance.new("TextButton")
+CloseButton.Position = UDim2.new(1, -30, 0, 0)
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+CloseButton.BorderSizePixel = 0
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.TextSize = 18
+CloseButton.Parent = TitleBar
+-- Статус
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Position = UDim2.new(0, 10, 0, 40)
+StatusLabel.Size = UDim2.new(1, -20, 0, 25)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Text = "Выберите цели для флинга"
+StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+StatusLabel.Font = Enum.Font.SourceSans
+StatusLabel.TextSize = 16
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.Parent = MainFrame
+-- Фрейм выбора режима
+local ModeFrame = Instance.new("Frame")
+ModeFrame.Position = UDim2.new(0, 10, 0, 70)
+ModeFrame.Size = UDim2.new(1, -20, 0, 30)
+ModeFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ModeFrame.BorderSizePixel = 0
+ModeFrame.Parent = MainFrame
+-- Выбор режима
+local ModeLabel = Instance.new("TextLabel")
+ModeLabel.Size = UDim2.new(0, 120, 1, 0)
+ModeLabel.BackgroundTransparency = 1
+ModeLabel.Text = "Режим выбора:"
+ModeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ModeLabel.Font = Enum.Font.SourceSans
+ModeLabel.TextSize = 14
+ModeLabel.TextXAlignment = Enum.TextXAlignment.Left
+ModeLabel.Parent = ModeFrame
+local ModeDropdown = Instance.new("TextButton")
+ModeDropdown.Position = UDim2.new(0, 125, 0, 5)
+ModeDropdown.Size = UDim2.new(0, 150, 0, 20)
+ModeDropdown.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ModeDropdown.BorderSizePixel = 0
+ModeDropdown.Text = "Игроки"
+ModeDropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
+ModeDropdown.Font = Enum.Font.SourceSans
+ModeDropdown.TextSize = 14
+ModeDropdown.Parent = ModeFrame
+-- Фрейм выбора команды (изначально скрыт)
+local TeamFrame = Instance.new("Frame")
+TeamFrame.Position = UDim2.new(0, 10, 0, 105)
+TeamFrame.Size = UDim2.new(1, -20, 0, 30)
+TeamFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+TeamFrame.BorderSizePixel = 0
+TeamFrame.Visible = false
+TeamFrame.Parent = MainFrame
+-- Выбор команды
+local TeamLabel = Instance.new("TextLabel")
+TeamLabel.Size = UDim2.new(0, 120, 1, 0)
+TeamLabel.BackgroundTransparency = 1
+TeamLabel.Text = "Команда:"
+TeamLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TeamLabel.Font = Enum.Font.SourceSans
+TeamLabel.TextSize = 14
+TeamLabel.TextXAlignment = Enum.TextXAlignment.Left
+TeamLabel.Parent = TeamFrame
+local TeamDropdown = Instance.new("TextButton")
+TeamDropdown.Position = UDim2.new(0, 125, 0, 5)
+TeamDropdown.Size = UDim2.new(0, 150, 0, 20)
+TeamDropdown.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+TeamDropdown.BorderSizePixel = 0
+TeamDropdown.Text = "Выберите команду"
+TeamDropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
+TeamDropdown.Font = Enum.Font.SourceSans
+TeamDropdown.TextSize = 14
+TeamDropdown.Parent = TeamFrame
+-- Фрейм выбора игроков
+local SelectionFrame = Instance.new("Frame")
+SelectionFrame.Position = UDim2.new(0, 10, 0, 140)
+SelectionFrame.Size = UDim2.new(1, -20, 0, 200)
+SelectionFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+SelectionFrame.BorderSizePixel = 0
+SelectionFrame.Parent = MainFrame
+-- Список игроков
+local PlayerScrollFrame = Instance.new("ScrollingFrame")
+PlayerScrollFrame.Position = UDim2.new(0, 5, 0, 5)
+PlayerScrollFrame.Size = UDim2.new(1, -10, 1, -10)
+PlayerScrollFrame.BackgroundTransparency = 1
+PlayerScrollFrame.BorderSizePixel = 0
+PlayerScrollFrame.ScrollBarThickness = 6
+PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+PlayerScrollFrame.Parent = SelectionFrame
+-- Кнопка старта
+local StartButton = Instance.new("TextButton")
+StartButton.Position = UDim2.new(0, 10, 0, 350)
+StartButton.Size = UDim2.new(0.5, -15, 0, 40)
+StartButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+StartButton.BorderSizePixel = 0
+StartButton.Text = "НАЧАТЬ ФЛИНГ"
+StartButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+StartButton.Font = Enum.Font.SourceSansBold
+StartButton.TextSize = 18
+StartButton.Parent = MainFrame
+-- Кнопка остановки
+local StopButton = Instance.new("TextButton")
+StopButton.Position = UDim2.new(0.5, 5, 0, 350)
+StopButton.Size = UDim2.new(0.5, -15, 0, 40)
+StopButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+StopButton.BorderSizePixel = 0
+StopButton.Text = "ОСТАНОВИТЬ"
+StopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+StopButton.Font = Enum.Font.SourceSansBold
+StopButton.TextSize = 18
+StopButton.Parent = MainFrame
+-- Кнопки выбора
+local SelectAllButton = Instance.new("TextButton")
+SelectAllButton.Position = UDim2.new(0, 10, 0, 400)
+SelectAllButton.Size = UDim2.new(0.5, -15, 0, 30)
+SelectAllButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+SelectAllButton.BorderSizePixel = 0
+SelectAllButton.Text = "ВЫБРАТЬ ВСЕХ"
+SelectAllButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SelectAllButton.Font = Enum.Font.SourceSans
+SelectAllButton.TextSize = 14
+SelectAllButton.Parent = MainFrame
+local DeselectAllButton = Instance.new("TextButton")
+DeselectAllButton.Position = UDim2.new(0.5, 5, 0, 400)
+DeselectAllButton.Size = UDim2.new(0.5, -15, 0, 30)
+DeselectAllButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+DeselectAllButton.BorderSizePixel = 0
+DeselectAllButton.Text = "СБРОСИТЬ ВЫБОР"
+DeselectAllButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+DeselectAllButton.Font = Enum.Font.SourceSans
+DeselectAllButton.TextSize = 14
+DeselectAllButton.Parent = MainFrame
+-- Переменные
+local SelectedTargets = {}
+local PlayerCheckboxes = {}
+local FlingActive = false
+local CurrentMode = "players" -- "players" или "team"
+local SelectedTeam = nil
+local TeamPlayers = {}
+getgenv().OldPos = nil
+getgenv().FPDH = workspace.FallenPartsDestroyHeight
+-- Функция обновления списка игроков
+local function RefreshPlayerList()
+    -- Очистка существующих записей
+    for _, child in pairs(PlayerScrollFrame:GetChildren()) do
+        child:Destroy()
+    end
+    PlayerCheckboxes = {}
+    
+    local PlayerList = {}
+    
+    if CurrentMode == "players" then
+        -- Режим выбора отдельных игроков
+        local allPlayers = Players:GetPlayers()
+        for _, player in ipairs(allPlayers) do
+            if player ~= Player then
+                table.insert(PlayerList, player)
+            end
+        end
+    else
+        -- Режим выбора команды
+        PlayerList = TeamPlayers
+    end
+    
+    -- Сортировка игроков
+    table.sort(PlayerList, function(a, b) return a.Name:lower() < b.Name:lower() end)
+    
+    -- Создание записей для каждого игрока
+    local yPosition = 5
+    for _, player in ipairs(PlayerList) do
+        -- Создание фрейма игрока
+        local PlayerEntry = Instance.new("Frame")
+        PlayerEntry.Size = UDim2.new(1, -10, 0, 30)
+        PlayerEntry.Position = UDim2.new(0, 5, 0, yPosition)
+        PlayerEntry.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        PlayerEntry.BorderSizePixel = 0
+        PlayerEntry.Parent = PlayerScrollFrame
+        
+        -- Чекбокс
+        local Checkbox = Instance.new("TextButton")
+        Checkbox.Size = UDim2.new(0, 24, 0, 24)
+        Checkbox.Position = UDim2.new(0, 3, 0.5, -12)
+        Checkbox.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+        Checkbox.BorderSizePixel = 0
+        Checkbox.Text = ""
+        Checkbox.Parent = PlayerEntry
+        
+        -- Галочка (изначально невидима)
+        local Checkmark = Instance.new("TextLabel")
+        Checkmark.Size = UDim2.new(1, 0, 1, 0)
+        Checkmark.BackgroundTransparency = 1
+        Checkmark.Text = "✓"
+        Checkmark.TextColor3 = Color3.fromRGB(0, 255, 0)
+        Checkmark.TextSize = 18
+        Checkmark.Font = Enum.Font.SourceSansBold
+        Checkmark.Visible = SelectedTargets[player.Name] ~= nil
+        Checkmark.Parent = Checkbox
+        
+        -- Метка имени игрока
+        local NameLabel = Instance.new("TextLabel")
+        NameLabel.Size = UDim2.new(1, -35, 1, 0)
+        NameLabel.Position = UDim2.new(0, 30, 0, 0)
+        NameLabel.BackgroundTransparency = 1
+        NameLabel.Text = player.Name
+        if CurrentMode == "team" and SelectedTeam then
+            NameLabel.Text = player.Name .. " (" .. SelectedTeam.Name .. ")"
+        end
+        NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        NameLabel.TextSize = 16
+        NameLabel.Font = Enum.Font.SourceSans
+        NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        NameLabel.Parent = PlayerEntry
+        
+        -- Область для клика
+        local ClickArea = Instance.new("TextButton")
+        ClickArea.Size = UDim2.new(1, 0, 1, 0)
+        ClickArea.BackgroundTransparency = 1
+        ClickArea.Text = ""
+        ClickArea.ZIndex = 2
+        ClickArea.Parent = PlayerEntry
+        
+        -- Переключение выбора при клике
+        ClickArea.MouseButton1Click:Connect(function()
+            if SelectedTargets[player.Name] then
+                SelectedTargets[player.Name] = nil
+                Checkmark.Visible = false
+            else
+                SelectedTargets[player.Name] = player
+                Checkmark.Visible = true
+            end
+            
+            UpdateStatus()
+        end)
+        
+        -- Сохранение ссылки на UI игрока
+        PlayerCheckboxes[player.Name] = {
+            Entry = PlayerEntry,
+            Checkmark = Checkmark
+        }
+        
+        yPosition = yPosition + 35
+    end
+    
+    -- Обновление размера прокрутки
+    PlayerScrollFrame.CanvasSize = UDim2.new(0, 0, 0, yPosition + 5)
+end
+-- Функция обновления списка команд
+local function RefreshTeamList()
+    local teams = Teams:GetTeams()
+    if #teams == 0 then
+        TeamDropdown.Text = "Нет команд"
+        return
+    end
+    
+    -- Создание фрейма для выбора команды
+    local TeamSelectionFrame = Instance.new("Frame")
+    TeamSelectionFrame.Size = UDim2.new(0, 200, 0, 150)
+    TeamSelectionFrame.Position = UDim2.new(0.5, -100, 0.5, -75)
+    TeamSelectionFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    TeamSelectionFrame.BorderSizePixel = 0
+    TeamSelectionFrame.ZIndex = 10
+    TeamSelectionFrame.Visible = false
+    TeamSelectionFrame.Parent = ScreenGui
+    
+    local TeamScroll = Instance.new("ScrollingFrame")
+    TeamScroll.Size = UDim2.new(1, -10, 1, -10)
+    TeamScroll.Position = UDim2.new(0, 5, 0, 5)
+    TeamScroll.BackgroundTransparency = 1
+    TeamScroll.ScrollBarThickness = 6
+    TeamScroll.CanvasSize = UDim2.new(0, 0, 0, #teams * 30)
+    TeamScroll.Parent = TeamSelectionFrame
+    
+    local yPos = 0
+    for _, team in ipairs(teams) do
+        local TeamButton = Instance.new("TextButton")
+        TeamButton.Size = UDim2.new(1, -10, 0, 25)
+        TeamButton.Position = UDim2.new(0, 5, 0, yPos)
+        TeamButton.BackgroundColor3 = team.TeamColor.Color
+        TeamButton.BorderSizePixel = 0
+        TeamButton.Text = team.Name
+        TeamButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        TeamButton.Font = Enum.Font.SourceSans
+        TeamButton.TextSize = 14
+        TeamButton.Parent = TeamScroll
+        
+        TeamButton.MouseButton1Click:Connect(function()
+            SelectedTeam = team
+            TeamDropdown.Text = team.Name
+            TeamDropdown.BackgroundColor3 = team.TeamColor.Color
+            
+            -- Получение игроков выбранной команды
+            TeamPlayers = {}
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player.Team == team and player ~= Player then
+                    table.insert(TeamPlayers, player)
+                end
+            end
+            
+            -- Очистка выбранных целей при смене команды
+            SelectedTargets = {}
+            
+            RefreshPlayerList()
+            UpdateStatus()
+            TeamSelectionFrame.Visible = false
+        end)
+        
+        yPos = yPos + 30
+    end
+    
+    -- Показать/скрыть выбор команды
+    TeamDropdown.MouseButton1Click:Connect(function()
+        TeamSelectionFrame.Visible = not TeamSelectionFrame.Visible
+    end)
+end
+-- Подсчет выбранных целей
+local function CountSelectedTargets()
+    local count = 0
+    for _ in pairs(SelectedTargets) do
+        count = count + 1
+    end
+    return count
+end
+-- Обновление статуса
+local function UpdateStatus()
+    local count = CountSelectedTargets()
+    if FlingActive then
+        StatusLabel.Text = "Флинг " .. count .. " цели(ей)"
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+    else
+        if CurrentMode == "team" and SelectedTeam then
+            StatusLabel.Text = "Команда: " .. SelectedTeam.Name .. " (" .. count .. " игроков)"
+        else
+            StatusLabel.Text = "Выбрано " .. count .. " цели(ей)" 
+        end
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end
+end
+-- Функция выбора/сброса всех игроков
+local function ToggleAllPlayers(select)
+    local PlayerList = {}
+    
+    if CurrentMode == "players" then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= Player then
+                table.insert(PlayerList, player)
+            end
+        end
+    else
+        PlayerList = TeamPlayers
+    end
+    
+    for _, player in ipairs(PlayerList) do
+        local checkboxData = PlayerCheckboxes[player.Name]
+        if checkboxData then
+            if select then
+                SelectedTargets[player.Name] = player
+                checkboxData.Checkmark.Visible = true
+            else
+                SelectedTargets[player.Name] = nil
+                checkboxData.Checkmark.Visible = false
+            end
+        end
+    end
+    
+    UpdateStatus()
+end
+-- Смена режима выбора
+local function ChangeMode(newMode)
+    CurrentMode = newMode
+    
+    if newMode == "players" then
+        ModeDropdown.Text = "Игроки"
+        TeamFrame.Visible = false
+        SelectionFrame.Position = UDim2.new(0, 10, 0, 105)
+        MainFrame.Size = UDim2.new(0, 300, 0, 400)
+    else
+        ModeDropdown.Text = "Команда"
+        TeamFrame.Visible = true
+        SelectionFrame.Position = UDim2.new(0, 10, 0, 140)
+        MainFrame.Size = UDim2.new(0, 300, 0, 430)
+        
+        -- Если команда не выбрана, выбрать первую доступную
+        if not SelectedTeam then
+            local teams = Teams:GetTeams()
+            if #teams > 0 then
+                SelectedTeam = teams[1]
+                TeamDropdown.Text = SelectedTeam.Name
+                TeamDropdown.BackgroundColor3 = SelectedTeam.TeamColor.Color
+                
+                -- Получение игроков выбранной команды
+                TeamPlayers = {}
+                for _, player in ipairs(Players:GetPlayers()) do
+                    if player.Team == SelectedTeam and player ~= Player then
+                        table.insert(TeamPlayers, player)
+                    end
+                end
+            else
+                TeamDropdown.Text = "Нет команд"
+            end
+        end
+    end
+    
+    -- Очистка выбранных целей при смене режима
+    SelectedTargets = {}
+    
+    RefreshPlayerList()
+    UpdateStatus()
+end
+-- Показать уведомление
+local function Message(Title, Text, Time)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = Title,
+        Text = Text,
+        Duration = Time or 5
+    })
+end
+-- Функция флинга от zqyDSUWX
+local function SkidFling(TargetPlayer)
+    local Character = Player.Character
+    local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+    local RootPart = Humanoid and Humanoid.RootPart
+    local TCharacter = TargetPlayer.Character
+    if not TCharacter then return end
+    
+    local THumanoid
+    local TRootPart
+    local THead
+    local Accessory
+    local Handle
+    if TCharacter:FindFirstChildOfClass("Humanoid") then
+        THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
+    end
+    if THumanoid and THumanoid.RootPart then
+        TRootPart = THumanoid.RootPart
+    end
+    if TCharacter:FindFirstChild("Head") then
+        THead = TCharacter.Head
+    end
+    if TCharacter:FindFirstChildOfClass("Accessory") then
+        Accessory = TCharacter:FindFirstChildOfClass("Accessory")
+    end
+    if Accessory and Accessory:FindFirstChild("Handle") then
+        Handle = Accessory.Handle
+    end
+    if Character and Humanoid and RootPart then
+        if RootPart.Velocity.Magnitude < 50 then
+            getgenv().OldPos = RootPart.CFrame
+        end
+        
+        if THumanoid and THumanoid.Sit then
+            return Message("Ошибка", TargetPlayer.Name .. " сидит", 2)
+        end
+        
+        if THead then
+            workspace.CurrentCamera.CameraSubject = THead
+        elseif Handle then
+            workspace.CurrentCamera.CameraSubject = Handle
+        elseif THumanoid and TRootPart then
+            workspace.CurrentCamera.CameraSubject = THumanoid
+        end
+        
+        if not TCharacter:FindFirstChildWhichIsA("BasePart") then
+            return
+        end
+        
+        local FPos = function(BasePart, Pos, Ang)
+            RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
+            Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
+            RootPart.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+            RootPart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+        end
+        
+                local SFBasePart = function(BasePart)
+            local TimeToWait = 2
+            local Time = tick()
+            local Angle = 0
+            repeat
+                if RootPart and THumanoid then
+                    if BasePart.Velocity.Magnitude < 50 then
+                        Angle = Angle + 100
+                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle),0 ,0))
+                        task.wait()
+                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle),0 ,0))
+                        task.wait()
+                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle),0 ,0))
+                        task.wait()
+                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+                    else
+                        FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+                        FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
+                        task.wait()
+                        FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+                        
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+                        task.wait()
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+                        task.wait()
+                    end
+                end
+            until Time + TimeToWait < tick() or not FlingActive
+        end
+        
+        workspace.FallenPartsDestroyHeight = 0/0
+        
+        local BV = Instance.new("BodyVelocity")
+        BV.Parent = RootPart
+        BV.Velocity = Vector3.new(0, 0, 0)
+        BV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+        
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+        
+        if TRootPart then
+            SFBasePart(TRootPart)
+        elseif THead then
+            SFBasePart(THead)
+        elseif Handle then
+            SFBasePart(Handle)
+        else
+            return Message("Ошибка", TargetPlayer.Name .. " нет подходящих частей", 2)
+        end
+        
+        BV:Destroy()
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+        workspace.CurrentCamera.CameraSubject = Humanoid
+        
+        -- Сброс позиции персонажа
+        if getgenv().OldPos then
+            repeat
+                RootPart.CFrame = getgenv().OldPos * CFrame.new(0, .5, 0)
+                Character:SetPrimaryPartCFrame(getgenv().OldPos * CFrame.new(0, .5, 0))
+                Humanoid:ChangeState("GettingUp")
+                for _, part in pairs(Character:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        part.Velocity, part.RotVelocity = Vector3.new(), Vector3.new()
+                    end
+                end
+                task.wait()
+            until (RootPart.Position - getgenv().OldPos.p).Magnitude < 25
+            workspace.FallenPartsDestroyHeight = getgenv().FPDH
+        end
+    else
+        return Message("Ошибка", "Ваш персонаж не готов", 2)
+    end
+end
+-- Начать флинг выбранных целей
+local function StartFling()
+    if FlingActive then return end
+    
+    local count = CountSelectedTargets()
+    if count == 0 then
+        StatusLabel.Text = "Цели не выбраны!"
+        wait(1)
+        UpdateStatus()
+        return
+    end
+    
+    FlingActive = true
+    UpdateStatus()
+    Message("Запущено", "Флинг " .. count .. " цели(ей)", 2)
+    
+    -- Запуск флинга в отдельном потоке
+    spawn(function()
+        while FlingActive do
+            local validTargets = {}
+            
+            -- Проверка всех целей на валидность
+            for name, player in pairs(SelectedTargets) do
+                if player and player.Parent then
+                    validTargets[name] = player
+                else
+                    -- Удаление вышедших игроков
+                    SelectedTargets[name] = nil
+                    local checkbox = PlayerCheckboxes[name]
+                    if checkbox then
+                        checkbox.Checkmark.Visible = false
+                    end
+                end
+            end
+            
+            -- Флинг каждой валидной цели
+            for _, player in pairs(validTargets) do
+                if FlingActive then
+                    SkidFling(player)
+                    -- Небольшая пауза между целями
+                    wait(0.1)
+                else
+                    break
+                end
+            end
+            
+            -- Периодическое обновление статуса
+            UpdateStatus()
+            
+            -- Пауза перед следующим циклом
+            wait(0.5)
+        end
+    end)
+end
+-- Остановить флинг
+local function StopFling()
+    if not FlingActive then return end
+    
+    FlingActive = false
+    
+    UpdateStatus()
+    Message("Остановлено", "Флинг остановлен", 2)
+end
+-- Настройка кнопок
+StartButton.MouseButton1Click:Connect(StartFling)
+StopButton.MouseButton1Click:Connect(StopFling)
+SelectAllButton.MouseButton1Click:Connect(function() ToggleAllPlayers(true) end)
+DeselectAllButton.MouseButton1Click:Connect(function() ToggleAllPlayers(false) end)
+CloseButton.MouseButton1Click:Connect(function()
+    StopFling()
+    ScreenGui:Destroy()
+end)
+-- Обработка смены режима
+ModeDropdown.MouseButton1Click:Connect(function()
+    if CurrentMode == "players" then
+        ChangeMode("team")
+    else
+        ChangeMode("players")
+    end
+end)
+-- Обработка присоединения/выхода игроков и смены команд
+Players.PlayerAdded:Connect(function(player)
+    RefreshPlayerList()
+    RefreshTeamList()
+end)
+Players.PlayerRemoving:Connect(function(player)
+    if SelectedTargets[player.Name] then
+        SelectedTargets[player.Name] = nil
+    end
+    RefreshPlayerList()
+    RefreshTeamList()
+    UpdateStatus()
+end)
+-- Обработка смены команд игроками
+local function onPlayerTeamChanged(player)
+    if CurrentMode == "team" and SelectedTeam then
+        -- Обновить список игроков команды если режим команды активен
+        TeamPlayers = {}
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.Team == SelectedTeam and p ~= Player then
+                table.insert(TeamPlayers, p)
+            end
+        end
+        RefreshPlayerList()
+        UpdateStatus()
+    end
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    player:GetPropertyChangedSignal("Team"):Connect(function()
+        onPlayerTeamChanged(player)
+    end)
+end
+-- Инициализация
+RefreshTeamList()
+RefreshPlayerList()
+UpdateStatus()
+ChangeMode("players") -- Начать в режиме выбора игроков
+-- Сообщение об успешной загрузке
+Message("Загружено", "🏆HydrogenHUB Universal Fling загружен!", 3)
+
+print("Loaded(⁠・⁠o⁠・⁠)")
