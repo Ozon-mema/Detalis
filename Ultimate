@@ -1,0 +1,489 @@
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+
+local Window = Fluent:CreateWindow({
+    Title = "HydrogenHUB Universal " .. Fluent.Version,
+    SubTitle = "Multi-functional script hub",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(600, 500),
+    Acrylic = true,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.LeftControl
+})
+
+local Tabs = {
+    Character = Window:AddTab({ Title = "Character", Icon = "user" }),
+    Troll = Window:AddTab({ Title = "Troll", Icon = "zap" })
+}
+
+local Options = Fluent.Options
+
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Player = Players.LocalPlayer
+
+-- Character Tab
+do
+    Tabs.Character:AddParagraph({
+        Title = "Character Controls",
+        Content = "Fly, speed, jump power and accessories"
+    })
+
+    -- Fly
+    Tabs.Character:AddButton({
+        Title = "Fly GUI",
+        Description = "Load fly script",
+        Callback = function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/Ozon-mema/Detalis/refs/heads/main/FlyGui"))()
+        end
+    })
+
+    -- Speed
+    local SpeedSlider = Tabs.Character:AddSlider("Speed", {
+        Title = "Walk Speed",
+        Description = "Adjust character movement speed",
+        Default = 16,
+        Min = 0,
+        Max = 200,
+        Rounding = 1,
+        Callback = function(Value)
+            if Player.Character and Player.Character:FindFirstChildOfClass("Humanoid") then
+                Player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = Value
+            end
+        end
+    })
+
+    -- Jump Power
+    local JumpSlider = Tabs.Character:AddSlider("JumpPower", {
+        Title = "Jump Power",
+        Description = "Adjust character jump height",
+        Default = 50,
+        Min = 0,
+        Max = 200,
+        Rounding = 1,
+        Callback = function(Value)
+            if Player.Character and Player.Character:FindFirstChildOfClass("Humanoid") then
+                Player.Character:FindFirstChildOfClass("Humanoid").JumpPower = Value
+            end
+        end
+    })
+
+    -- Accessories
+    Tabs.Character:AddParagraph({
+        Title = "Accessories",
+        Content = "Wear accessories by ID"
+    })
+
+    local AccessoryInput = Tabs.Character:AddInput("AccessoryID", {
+        Title = "Accessory ID",
+        Default = "",
+        Placeholder = "Enter accessory ID...",
+        Numeric = false,
+        Finished = false
+    })
+
+    Tabs.Character:AddButton({
+        Title = "Wear Accessory",
+        Description = "Wear accessory by ID",
+        Callback = function()
+            local accessoryId = Options.AccessoryID.Value
+            if accessoryId == "" then
+                Fluent:Notify({
+                    Title = "Error",
+                    Content = "Please enter accessory ID",
+                    Duration = 3
+                })
+                return
+            end
+
+            local success, result = pcall(function()
+                game:GetService("Players").LocalPlayer.Character:AddAccessory(accessoryId)
+            end)
+
+            if success then
+                Fluent:Notify({
+                    Title = "Success",
+                    Content = "Accessory added!",
+                    Duration = 3
+                })
+            else
+                Fluent:Notify({
+                    Title = "Error",
+                    Content = "Failed to add accessory",
+                    Duration = 3
+                })
+            end
+        end
+    })
+
+    -- Reset Character
+    Tabs.Character:AddButton({
+        Title = "Reset Character",
+        Description = "Reset your character",
+        Callback = function()
+            Player.Character:BreakJoints()
+        end
+    })
+end
+
+-- Troll Tab
+do
+    Tabs.Troll:AddParagraph({
+        Title = "Troll Features",
+        Content = "Bang and fling players"
+    })
+
+    -- Player Selection
+    local PlayerDropdown = Tabs.Troll:AddDropdown("TargetPlayer", {
+        Title = "Target Player",
+        Description = "Select player to troll",
+        Values = {},
+        Multi = false,
+        Default = 1,
+    })
+
+    -- Function to update player list
+    local function UpdatePlayerList()
+        local players = {}
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= Player then
+                table.insert(players, player.Name)
+            end
+        end
+        PlayerDropdown:SetValues(players)
+        if #players > 0 then
+            PlayerDropdown:SetValue(players[1])
+        end
+    end
+
+    -- Initial update and connections
+    UpdatePlayerList()
+    Players.PlayerAdded:Connect(UpdatePlayerList)
+    Players.PlayerRemoving:Connect(UpdatePlayerList)
+
+    -- Bang System
+    Tabs.Troll:AddParagraph({
+        Title = "Bang System",
+        Content = "Different bang modes"
+    })
+
+    local BangMode = Tabs.Troll:AddDropdown("BangMode", {
+        Title = "Bang Mode",
+        Description = "Select bang type",
+        Values = {"Face Bang", "Bang", "Get Banged"},
+        Multi = false,
+        Default = "Face Bang",
+    })
+
+    local BangSpeed = Tabs.Troll:AddSlider("BangSpeed", {
+        Title = "Bang Speed",
+        Description = "Movement speed for bang",
+        Default = 5,
+        Min = 1,
+        Max = 20,
+        Rounding = 1
+    })
+
+    local BangToggle = Tabs.Troll:AddToggle("BangActive", {
+        Title = "Enable Bang",
+        Default = false
+    })
+
+    -- Bang Variables
+    local BangConnections = {}
+    local BangActive = false
+
+    BangToggle:OnChanged(function(value)
+        BangActive = value
+        local targetName = Options.TargetPlayer.Value
+        local targetPlayer = Players:FindFirstChild(targetName)
+        
+        if not targetPlayer then
+            Fluent:Notify({
+                Title = "Error",
+                Content = "Target player not found",
+                Duration = 3
+            })
+            BangToggle:SetValue(false)
+            return
+        end
+
+        if value then
+            -- Start bang
+            local mode = Options.BangMode.Value
+            local speed = Options.BangSpeed.Value
+            
+            local connection = RunService.Heartbeat:Connect(function()
+                if not BangActive or not targetPlayer.Character then return end
+                
+                local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+                local localRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+                
+                if not targetRoot or not localRoot then return end
+                
+                if mode == "Face Bang" then
+                    -- Face bang: in front of player facing them
+                    local offset = targetRoot.CFrame.LookVector * 3
+                    localRoot.CFrame = targetRoot.CFrame + offset
+                    localRoot.CFrame = CFrame.lookAt(localRoot.Position, targetRoot.Position)
+                    
+                    -- Forward/back movement
+                    local move = math.sin(tick() * speed) * 2
+                    localRoot.CFrame = localRoot.CFrame + targetRoot.CFrame.LookVector * move
+                    
+                elseif mode == "Bang" then
+                    -- Bang: behind player's torso
+                    local offset = -targetRoot.CFrame.LookVector * 3
+                    localRoot.CFrame = targetRoot.CFrame + offset
+                    
+                    -- Forward/back movement
+                    local move = math.sin(tick() * speed) * 2
+                    localRoot.CFrame = localRoot.CFrame + targetRoot.CFrame.LookVector * move
+                    
+                elseif mode == "Get Banged" then
+                    -- Get banged: target flies in front of local player
+                    if Player.Character then
+                        local localRoot = Player.Character:FindFirstChild("HumanoidRootPart")
+                        if localRoot then
+                            local offset = localRoot.CFrame.LookVector * 3
+                            targetRoot.CFrame = localRoot.CFrame + offset
+                            
+                            -- Forward/back movement
+                            local move = math.sin(tick() * speed) * 2
+                            targetRoot.CFrame = targetRoot.CFrame + localRoot.CFrame.LookVector * move
+                        end
+                    end
+                end
+            end)
+            
+            BangConnections[targetName] = connection
+            Fluent:Notify({
+                Title = "Bang Started",
+                Content = mode .. " on " .. targetName,
+                Duration = 3
+            })
+        else
+            -- Stop bang
+            if BangConnections[targetName] then
+                BangConnections[targetName]:Disconnect()
+                BangConnections[targetName] = nil
+            end
+            Fluent:Notify({
+                Title = "Bang Stopped",
+                Content = "Stopped banging " .. targetName,
+                Duration = 3
+            })
+        end
+    end)
+
+    -- Fling System
+    Tabs.Troll:AddParagraph({
+        Title = "Fling System",
+        Content = "Fling selected players"
+    })
+
+    local FlingToggle = Tabs.Troll:AddToggle("FlingActive", {
+        Title = "Enable Fling",
+        Default = false
+    })
+
+    local FlingSpeed = Tabs.Troll:AddSlider("FlingSpeed", {
+        Title = "Fling Intensity",
+        Description = "Fling power",
+        Default = 100,
+        Min = 50,
+        Max = 500,
+        Rounding = 1
+    })
+
+    -- Fling Variables
+    local FlingActive = false
+    local FlingConnections = {}
+    local OldPos = nil
+    local FPDH = workspace.FallenPartsDestroyHeight
+
+    -- Fling function from provided script
+    local function SkidFling(TargetPlayer)
+        local Character = Player.Character
+        local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+        local RootPart = Humanoid and Humanoid.RootPart
+        local TCharacter = TargetPlayer.Character
+        if not TCharacter then return end
+        
+        local THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
+        local TRootPart = THumanoid and THumanoid.RootPart
+        local THead = TCharacter:FindFirstChild("Head")
+        local Accessory = TCharacter:FindFirstChildOfClass("Accessory")
+        local Handle = Accessory and Accessory:FindFirstChild("Handle")
+        
+        if Character and Humanoid and RootPart then
+            if RootPart.Velocity.Magnitude < 50 then
+                OldPos = RootPart.CFrame
+            end
+            
+            if THumanoid and THumanoid.Sit then
+                return
+            end
+            
+            if THead then
+                workspace.CurrentCamera.CameraSubject = THead
+            elseif Handle then
+                workspace.CurrentCamera.CameraSubject = Handle
+            elseif THumanoid and TRootPart then
+                workspace.CurrentCamera.CameraSubject = THumanoid
+            end
+            
+            if not TCharacter:FindFirstChildWhichIsA("BasePart") then
+                return
+            end
+            
+            local FPos = function(BasePart, Pos, Ang)
+                RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
+                Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
+                RootPart.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+                RootPart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+            end
+            
+            local SFBasePart = function(BasePart)
+                local TimeToWait = 2
+                local Time = tick()
+                local Angle = 0
+                repeat
+                    if RootPart and THumanoid then
+                        if BasePart.Velocity.Magnitude < 50 then
+                            Angle = Angle + 100
+                            FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle),0 ,0))
+                            task.wait()
+                            FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                            task.wait()
+                        else
+                            FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+                            task.wait()
+                            FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
+                            task.wait()
+                        end
+                    end
+                until Time + TimeToWait < tick() or not FlingActive
+            end
+            
+            workspace.FallenPartsDestroyHeight = 0/0
+            
+            local BV = Instance.new("BodyVelocity")
+            BV.Parent = RootPart
+            BV.Velocity = Vector3.new(0, 0, 0)
+            BV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+            
+            Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+            
+            if TRootPart then
+                SFBasePart(TRootPart)
+            elseif THead then
+                SFBasePart(THead)
+            elseif Handle then
+                SFBasePart(Handle)
+            end
+            
+            BV:Destroy()
+            Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+            workspace.CurrentCamera.CameraSubject = Humanoid
+            
+            if OldPos then
+                repeat
+                    RootPart.CFrame = OldPos * CFrame.new(0, .5, 0)
+                    Character:SetPrimaryPartCFrame(OldPos * CFrame.new(0, .5, 0))
+                    Humanoid:ChangeState("GettingUp")
+                    RootPart.Velocity, RootPart.RotVelocity = Vector3.new(), Vector3.new()
+                    task.wait()
+                until (RootPart.Position - OldPos.p).Magnitude < 25
+                workspace.FallenPartsDestroyHeight = FPDH
+            end
+        end
+    end
+
+    FlingToggle:OnChanged(function(value)
+        FlingActive = value
+        local targetName = Options.TargetPlayer.Value
+        local targetPlayer = Players:FindFirstChild(targetName)
+        
+        if not targetPlayer then
+            Fluent:Notify({
+                Title = "Error",
+                Content = "Target player not found",
+                Duration = 3
+            })
+            FlingToggle:SetValue(false)
+            return
+        end
+
+        if value then
+            -- Start fling
+            Fluent:Notify({
+                Title = "Fling Started",
+                Content = "Flinging " .. targetName,
+                Duration = 3
+            })
+            
+            local connection = RunService.Heartbeat:Connect(function()
+                if FlingActive and targetPlayer.Character then
+                    SkidFling(targetPlayer)
+                end
+            end)
+            
+            FlingConnections[targetName] = connection
+        else
+            -- Stop fling
+            if FlingConnections[targetName] then
+                FlingConnections[targetName]:Disconnect()
+                FlingConnections[targetName] = nil
+            end
+            Fluent:Notify({
+                Title = "Fling Stopped",
+                Content = "Stopped flinging " .. targetName,
+                Duration = 3
+            })
+        end
+    end)
+
+    -- Select All Players Button
+    Tabs.Troll:AddButton({
+        Title = "Select All Players",
+        Description = "Select all players for mass trolling",
+        Callback = function()
+            local allPlayers = {}
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= Player then
+                    table.insert(allPlayers, player.Name)
+                end
+            end
+            PlayerDropdown:SetValues(allPlayers)
+            Fluent:Notify({
+                Title = "Selection Updated",
+                Content = "All players selected",
+                Duration = 3
+            })
+        end
+    })
+end
+
+-- Add managers
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({})
+
+InterfaceManager:SetFolder("Fluent")
+SaveManager:SetFolder("Fluent/HydrogenHUB")
+
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+
+Window:SelectTab(1)
+
+Fluent:Notify({
+    Title = "HydrogenHUB Universal",
+    Content = "Successfully loaded!",
+    Duration = 5
+})
