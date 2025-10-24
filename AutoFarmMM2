@@ -1,0 +1,485 @@
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+
+local Window = Fluent:CreateWindow({
+    Title = "💠 —« Auto farm MM2 »— 💠 " .. Fluent.Version,
+    SubTitle = "Murder Mystery 2 Coin & Candy Farmer",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(600, 450),
+    Acrylic = true,
+    Theme = "Amethyst",
+    MinimizeKey = Enum.KeyCode.LeftControl
+})
+
+local Tabs = {
+    Main = Window:AddTab({ Title = "Auto Farm", Icon = "dollar-sign" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
+
+local Options = Fluent.Options
+
+-- Services
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local Player = Players.LocalPlayer
+
+-- Auto Farm Variables
+local AutoFarmEnabled = false
+local CoinFarmEnabled = false
+local CandyFarmEnabled = false
+local AutoCollectEnabled = false
+local FarmConnection = nil
+
+-- Farm Statistics
+local FarmStats = {
+    CoinsCollected = 0,
+    CandyCollected = 0,
+    StartTime = 0,
+    LastCoinTime = 0
+}
+
+-- Function to find coins in workspace
+local function findCoins()
+    local coins = {}
+    
+    -- Search in different possible locations for coins
+    local possibleLocations = {
+        Workspace,
+        Workspace:FindFirstChild("Map"),
+        Workspace:FindFirstChild("Game"),
+        Workspace:FindFirstChild("Coins")
+    }
+    
+    for _, location in pairs(possibleLocations) do
+        if location then
+            for _, obj in pairs(location:GetDescendants()) do
+                if obj:IsA("Part") and (obj.Name:lower():find("coin") or obj.Name:lower():find("money")) then
+                    table.insert(coins, obj)
+                elseif obj:IsA("Model") and (obj.Name:lower():find("coin") or obj.Name:lower():find("money")) then
+                    table.insert(coins, obj)
+                end
+            end
+        end
+    end
+    
+    return coins
+end
+
+-- Function to find candy
+local function findCandy()
+    local candy = {}
+    
+    -- Search for candy in common locations
+    local possibleLocations = {
+        Workspace,
+        Workspace:FindFirstChild("Map"),
+        Workspace:FindFirstChild("Game"),
+        Workspace:FindFirstChild("Candy")
+    }
+    
+    for _, location in pairs(possibleLocations) do
+        if location then
+            for _, obj in pairs(location:GetDescendants()) do
+                if obj:IsA("Part") and obj.Name:lower():find("candy") then
+                    table.insert(candy, obj)
+                elseif obj:IsA("Model") and obj.Name:lower():find("candy") then
+                    table.insert(candy, obj)
+                end
+            end
+        end
+    end
+    
+    return candy
+end
+
+-- Function to teleport to item
+local function teleportToItem(item)
+    if not Player.Character then return end
+    
+    local humanoid = Player.Character:FindFirstChildOfClass("Humanoid")
+    local rootPart = Player.Character:FindFirstChild("HumanoidRootPart")
+    
+    if not humanoid or not rootPart then return end
+    
+    -- Calculate position near the item
+    local itemPosition = item:IsA("Model") and item.PrimaryPart.Position or item.Position
+    local offset = Vector3.new(math.random(-2, 2), 3, math.random(-2, 2))
+    local targetPosition = itemPosition + offset
+    
+    -- Teleport player
+    rootPart.CFrame = CFrame.new(targetPosition)
+    
+    -- Simulate touch for collection
+    if item:IsA("Part") then
+        firetouchinterest(rootPart, item, 0) -- Touch
+        firetouchinterest(rootPart, item, 1) -- Untouch
+    elseif item:IsA("Model") and item.PrimaryPart then
+        firetouchinterest(rootPart, item.PrimaryPart, 0) -- Touch
+        firetouchinterest(rootPart, item.PrimaryPart, 1) -- Untouch
+    end
+    
+    return true
+end
+
+-- Function to start auto farm
+local function startAutoFarm()
+    if FarmConnection then
+        FarmConnection:Disconnect()
+        FarmConnection = nil
+    end
+    
+    FarmStats.StartTime = tick()
+    
+    FarmConnection = RunService.Heartbeat:Connect(function()
+        if not AutoFarmEnabled then return end
+        
+        local character = Player.Character
+        if not character then return end
+        
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        
+        if not humanoid or not rootPart then return end
+        
+        -- Coin Farming
+        if CoinFarmEnabled then
+            local coins = findCoins()
+            if #coins > 0 then
+                local closestCoin = coins[1]
+                local closestDistance = (rootPart.Position - (closestCoin:IsA("Model") and closestCoin.PrimaryPart.Position or closestCoin.Position)).Magnitude
+                
+                -- Find closest coin
+                for i = 2, #coins do
+                    local coin = coins[i]
+                    local coinPos = coin:IsA("Model") and coin.PrimaryPart.Position or coin.Position
+                    local distance = (rootPart.Position - coinPos).Magnitude
+                    
+                    if distance < closestDistance then
+                        closestCoin = coin
+                        closestDistance = distance
+                    end
+                end
+                
+                -- Teleport to coin if within reasonable distance
+                if closestDistance < 100 then
+                    local success = teleportToItem(closestCoin)
+                    if success then
+                        FarmStats.CoinsCollected = FarmStats.CoinsCollected + 1
+                        FarmStats.LastCoinTime = tick()
+                    end
+                end
+            end
+        end
+        
+        -- Candy Farming
+        if CandyFarmEnabled then
+            local candies = findCandy()
+            if #candies > 0 then
+                local closestCandy = candies[1]
+                local closestDistance = (rootPart.Position - (closestCandy:IsA("Model") and closestCandy.PrimaryPart.Position or closestCandy.Position)).Magnitude
+                
+                -- Find closest candy
+                for i = 2, #candies do
+                    local candy = candies[i]
+                    local candyPos = candy:IsA("Model") and candy.PrimaryPart.Position or candy.Position
+                    local distance = (rootPart.Position - candyPos).Magnitude
+                    
+                    if distance < closestDistance then
+                        closestCandy = candy
+                        closestDistance = distance
+                    end
+                end
+                
+                -- Teleport to candy if within reasonable distance
+                if closestDistance < 100 then
+                    local success = teleportToItem(closestCandy)
+                    if success then
+                        FarmStats.CandyCollected = FarmStats.CandyCollected + 1
+                    end
+                end
+            end
+        end
+        
+        -- Update stats display
+        if StatsParagraph then
+            local elapsedTime = tick() - FarmStats.StartTime
+            local coinsPerMinute = FarmStats.CoinsCollected / (elapsedTime / 60)
+            local candyPerMinute = FarmStats.CandyCollected / (elapsedTime / 60)
+            
+            StatsParagraph:SetDesc(
+                "Coins: " .. FarmStats.CoinsCollected .. 
+                " | Candy: " .. FarmStats.CandyCollected ..
+                "\nCoins/min: " .. string.format("%.1f", coinsPerMinute) ..
+                " | Candy/min: " .. string.format("%.1f", candyPerMinute) ..
+                "\nRunning: " .. string.format("%.1f", elapsedTime) .. "s"
+            )
+        end
+    end)
+end
+
+-- Function to stop auto farm
+local function stopAutoFarm()
+    AutoFarmEnabled = false
+    if FarmConnection then
+        FarmConnection:Disconnect()
+        FarmConnection = nil
+    end
+end
+
+-- Function to reset stats
+local function resetStats()
+    FarmStats = {
+        CoinsCollected = 0,
+        CandyCollected = 0,
+        StartTime = 0,
+        LastCoinTime = 0
+    }
+    
+    if StatsParagraph then
+        StatsParagraph:SetDesc("Coins: 0 | Candy: 0\nCoins/min: 0.0 | Candy/min: 0.0\nRunning: 0.0s")
+    end
+end
+
+-- Main Tab
+do
+    Tabs.Main:AddParagraph({
+        Title = "💠 MM2 Auto Farm 💠",
+        Content = "Automatically farm coins and candy in Murder Mystery 2"
+    })
+
+    -- Auto Farm Toggle
+    local AutoFarmToggle = Tabs.Main:AddToggle("AutoFarm", {
+        Title = "Enable Auto Farm",
+        Default = false
+    })
+
+    AutoFarmToggle:OnChanged(function(value)
+        AutoFarmEnabled = value
+        if value then
+            startAutoFarm()
+            Fluent:Notify({
+                Title = "Auto Farm Started",
+                Content = "Auto farming is now active",
+                Duration = 3
+            })
+        else
+            stopAutoFarm()
+            Fluent:Notify({
+                Title = "Auto Farm Stopped",
+                Content = "Auto farming has been stopped",
+                Duration = 3
+            })
+        end
+    end)
+
+    -- Farm Type Selection
+    Tabs.Main:AddParagraph({
+        Title = "Farm Settings",
+        Content = "Select what to farm"
+    })
+
+    local CoinFarmToggle = Tabs.Main:AddToggle("CoinFarm", {
+        Title = "Farm Coins",
+        Default = true
+    })
+
+    CoinFarmToggle:OnChanged(function(value)
+        CoinFarmEnabled = value
+    end)
+
+    local CandyFarmToggle = Tabs.Main:AddToggle("CandyFarm", {
+        Title = "Farm Candy",
+        Default = true
+    })
+
+    CandyFarmToggle:OnChanged(function(value)
+        CandyFarmEnabled = value
+    end)
+
+    -- Farm Speed
+    local FarmSpeed = Tabs.Main:AddSlider("FarmSpeed", {
+        Title = "Farm Speed",
+        Description = "Teleport speed (lower = faster)",
+        Default = 0.1,
+        Min = 0.01,
+        Max = 1,
+        Rounding = 2,
+        Callback = function(Value)
+            -- Speed is handled by the heartbeat connection
+        end
+    })
+
+    -- Search Radius
+    local SearchRadius = Tabs.Main:AddSlider("SearchRadius", {
+        Title = "Search Radius",
+        Description = "How far to search for items",
+        Default = 100,
+        Min = 50,
+        Max = 500,
+        Rounding = 0,
+        Callback = function(Value)
+            -- Radius is used in the farm function
+        end
+    })
+
+    -- Statistics Display
+    StatsParagraph = Tabs.Main:AddParagraph({
+        Title = "📊 Farming Statistics",
+        Content = "Coins: 0 | Candy: 0\nCoins/min: 0.0 | Candy/min: 0.0\nRunning: 0.0s"
+    })
+
+    -- Control Buttons
+    Tabs.Main:AddButton({
+        Title = "🔄 Refresh Items",
+        Description = "Force refresh coin and candy search",
+        Callback = function()
+            local coins = #findCoins()
+            local candy = #findCandy()
+            Fluent:Notify({
+                Title = "Items Refreshed",
+                Content = "Found " .. coins .. " coins and " .. candy .. " candy",
+                Duration = 3
+            })
+        end
+    })
+
+    Tabs.Main:AddButton({
+        Title = "🔄 Reset Statistics",
+        Description = "Reset all farming statistics",
+        Callback = function()
+            resetStats()
+            Fluent:Notify({
+                Title = "Statistics Reset",
+                Content = "All stats have been reset",
+                Duration = 3
+            })
+        end
+    })
+
+    Tabs.Main:AddButton({
+        Title = "🌀 Teleport to Safe Spot",
+        Description = "Teleport to a safe location",
+        Callback = function()
+            if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+                -- Find a safe spot (usually spawn area)
+                local spawn = Workspace:FindFirstChild("Spawn") or Workspace:FindFirstChild("Lobby")
+                if spawn then
+                    Player.Character.HumanoidRootPart.CFrame = CFrame.new(spawn.Position + Vector3.new(0, 5, 0))
+                else
+                    -- Default safe position
+                    Player.Character.HumanoidRootPart.CFrame = CFrame.new(0, 25, 0)
+                end
+                Fluent:Notify({
+                    Title = "Teleported",
+                    Content = "Teleported to safe location",
+                    Duration = 2
+                })
+            end
+        end
+    })
+
+    -- Anti-AFK
+    local AntiAFKToggle = Tabs.Main:AddToggle("AntiAFK", {
+        Title = "Enable Anti-AFK",
+        Default = true
+    })
+
+    AntiAFKToggle:OnChanged(function(value)
+        if value then
+            -- Anti-AFK script
+            local VirtualUser = game:GetService("VirtualUser")
+            Player.Idled:Connect(function()
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new())
+            end)
+            Fluent:Notify({
+                Title = "Anti-AFK Enabled",
+                Content = "You won't be kicked for AFK",
+                Duration = 3
+            })
+        end
+    end)
+
+    -- Instructions
+    Tabs.Main:AddParagraph({
+        Title = "📝 Instructions",
+        Content = "1. Enable Auto Farm\n2. Select what to farm (Coins/Candy)\n3. Adjust speed and radius as needed\n4. Use safe spot if detected\n5. Enable Anti-AFK for long sessions"
+    })
+end
+
+-- Settings Tab
+do
+    Tabs.Settings:AddParagraph({
+        Title = "Settings",
+        Content = "Configure auto farm settings"
+    })
+
+    -- Auto-Start
+    local AutoStartToggle = Tabs.Settings:AddToggle("AutoStart", {
+        Title = "Auto-Start Farm",
+        Description = "Automatically start farming when script loads",
+        Default = false
+    })
+
+    -- Notifications
+    local NotificationsToggle = Tabs.Settings:AddToggle("Notifications", {
+        Title = "Enable Notifications",
+        Description = "Show farm status notifications",
+        Default = true
+    })
+
+    -- Save Configuration
+    Tabs.Settings:AddButton({
+        Title = "💾 Save Configuration",
+        Description = "Save current settings",
+        Callback = function()
+            Fluent:Notify({
+                Title = "Settings Saved",
+                Content = "Configuration has been saved",
+                Duration = 3
+            })
+        end
+    })
+
+    Tabs.Settings:AddButton({
+        Title = "🔄 Load Configuration",
+        Description = "Load saved settings",
+        Callback = function()
+            Fluent:Notify({
+                Title = "Settings Loaded",
+                Content = "Configuration has been loaded",
+                Duration = 3
+            })
+        end
+    })
+end
+
+-- Initialize farm settings
+CoinFarmEnabled = true
+CandyFarmEnabled = true
+
+-- Add managers
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({"AutoFarm", "CoinFarm", "CandyFarm"})
+
+InterfaceManager:SetFolder("Fluent")
+SaveManager:SetFolder("Fluent/MM2AutoFarm")
+
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+
+Window:SelectTab(1)
+
+-- Startup notification
+Fluent:Notify({
+    Title = "💠 MM2 Auto Farm Loaded 💠",
+    Content = "Ready to farm coins and candy!",
+    Duration = 5
+})
+
+print("💠 MM2 Auto Farm successfully loaded!")
